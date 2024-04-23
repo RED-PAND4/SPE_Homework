@@ -1,5 +1,4 @@
 import numpy as np
-import seaborn as sns
 from scipy import stats
 from scipy.stats import rayleigh
 from scipy.stats import expon
@@ -12,6 +11,8 @@ import numpy as np
 
 sz = 20000
 bin_default = 80
+
+
 
 #-------------------- COMMON FUNCTIONS --------------------
 
@@ -34,9 +35,14 @@ def plot_comparison(accepted, x, y, name, ylim1, ylim2, bin_num=bin_default):
     fig, ax1 = plt.subplots()
     ax1.hist(accepted, bins=bin_num, alpha=0.8)
     plt.ylim(0,ylim1)
+    plt.ylabel("number of occurrences")
+    for tl in ax1.get_yticklabels():
+        tl.set_color('blue')
     ax2 = ax1.twinx()
     ax2.plot(x, y,'r-', lw=2, alpha=1, label='rice pdf')
     plt.ylim([0,ylim2])
+    for tl in ax2.get_yticklabels():
+        tl.set_color('red')
     plt.title(name+" pdf compared to sampling histogram")
 
 # function to calculate Rayleigh pdf at point x
@@ -67,7 +73,7 @@ y_expon = [calculate_expon(i, sc, lambd) for i in x]
 # plotting ray and exponential
 exp = expon(scale=scale_factor)
 ax.plot(x, y_expon,'b-', lw=1, alpha=0.6, label='expon pdf')
-ax.plot(x, y_ray, 'k-', lw=1, alpha=0.6, label='rayleigh pdf')
+ax.plot(x, y_ray, 'r-', lw=1, alpha=0.6, label='rayleigh pdf')
 plt.title("Rayleigh pdf and bounding exponential pdf")
 
 
@@ -96,7 +102,7 @@ exp_2 = expon(scale = scale_factor)
 
 y_rice = [calculate_rice(i) for i in x]
 y_expon = [calculate_expon(i,sc,lambd) for i in x]
-ax.plot(x, y_rice,'k-', lw=1, alpha=0.6, label='rice pdf')
+ax.plot(x, y_rice,'r-', lw=1, alpha=0.6, label='rice pdf')
 ax.plot(x, y_expon,'b-', lw=1, alpha=0.6, label='exponential pdf' )
 plt.title("Rice pdf and bounding exponential pdf")
 
