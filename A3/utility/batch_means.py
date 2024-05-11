@@ -52,9 +52,9 @@ def compute_batch_means_statistics(type, queue_occupation, batch_size, warmup_ti
     ci_s = [eta * np.std(b) / np.sqrt(batch_size) for b in batches]
 
     # correlation?
-    f, ax = plt.subplots(1)
-    pdplt.autocorrelation_plot(batch_means, ax=ax)
-    ax.set_title("autocorrelation for batch means")
+    # f, ax = plt.subplots(1)
+    # pdplt.autocorrelation_plot(batch_means, ax=ax)
+    # ax.set_title("autocorrelation for batch means")
 
     # compute g_mean
     g_mean = np.mean(batch_means)
