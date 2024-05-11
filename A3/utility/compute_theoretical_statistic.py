@@ -1,5 +1,3 @@
-import numpy as np
-import math
 
 # Definition
 # λ = Arrival Rate ( lamb)
