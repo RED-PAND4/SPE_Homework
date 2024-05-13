@@ -1,9 +1,11 @@
 import numpy as np
+import pandas as pd
 import numbers
 import scipy.stats as stats #type: ignore
 from plotting import Statistics
 import pandas.plotting as pdplt #type: ignore
 import matplotlib.pyplot as plt
+from statsmodels.graphics.tsaplots import plot_acf
 
 
 
@@ -21,39 +23,26 @@ def compute_batch_means_statistics(type, queue_occupation, batch_size, warmup_ti
     number_batches = len(batches)
     print(f"Number batches: {number_batches} of size {batch_size}")
 
-
-    #batch_means = [np.mean(batch) for batch in batches]
-
-    t=0
-    batch_means = []
+    
     #compute means
-    for b in batches:
-        #print(b[0].shape)        
+    batch_means = []
+    for b in batches:    
         total_width = np.sum(b["width"].values)
         tot = np.sum(b["packets_in_system"].values * b["width"].values) / total_width
-        # t=1
-        # tot = 0
-        # for element in b:
-        #     total_width = np.sum(element[2].values)
-        #     tot = np.sum(element[1].values * element[2].values) / total_width
-    
-            # #print(element.shape)
-            # print(element)
-            # if not isinstance(element[0], numbers.Number):
-            #     print("continue")
-            #     continue
-            # print("should be pakets:", element[0])
-            # print("should be width:" , element[1])
-            # t += element[1]
-            # tot += element[1] * element[0]
         batch_means.append(tot)
 
     eta = stats.norm.ppf((1 + z) / 2) #enough batches to use CLT
-    ci_s = [eta * np.std(b) / np.sqrt(batch_size) for b in batches]
+    ci_s = []
+    for b in batches:
+        ci = eta * np.std(b["packets_in_system"]* b["width"]) / np.sqrt(batch_size)
+        ci_s.append(ci)
 
-    # correlation?
+    # autocorrelation?
+    # data = batches[1]
+    # data = data[['time', 'packets_in_system']].set_index(['time'])
+    # plot_acf(data, use_vlines=True)
     # f, ax = plt.subplots(1)
-    # pdplt.autocorrelation_plot(batch_means, ax=ax)
+    # pdplt.autocorrelation_plot(batches[1], ax=ax)
     # ax.set_title("autocorrelation for batch means")
 
     # compute g_mean

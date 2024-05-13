@@ -1,6 +1,7 @@
 import logging
 import os
 import pandas as pd
+import numpy as np
 from queue import Queue
 from utility.compute_theoretical_statistic import *
 from utility.pareto import pareto_dist
@@ -8,7 +9,7 @@ from utility.event import *
 
 
 
-def simulation(sim_time, l, mu, gen, ser=None):
+def simulation(sim_time, l, mu, ser=None):
     try:
         os.remove("simulation.log")
     except OSError:
@@ -54,7 +55,7 @@ def simulation(sim_time, l, mu, gen, ser=None):
                 Generate the first arrival event and put it in the queue.
                 """
                 # first arrival
-                arrival_time = gen.exponential(1 / l)
+                arrival_time = np.random.exponential(1 / l)
                 my_queue.queue.put((system_time + arrival_time, (Event(EventType.arrival, system_time + arrival_time, 0))))
                 queue_occupation.append({'time':system_time, 'packets_in_system': server_queue.qsize(), 'width':arrival_time})
 
@@ -75,7 +76,7 @@ def simulation(sim_time, l, mu, gen, ser=None):
                 #server free?
                 if status_server == 0: # free
                     status_server = 1 
-                    service_time = gen.exponential(1 / mu)
+                    service_time = np.random.exponential(1 / mu)
                     my_queue.queue.put((current_Event.time + service_time, (Event(EventType.departure, current_Event.time + service_time, current_Event.id))))  
 
                     #packet_in_queue = server_queue.qsize()
@@ -97,7 +98,7 @@ def simulation(sim_time, l, mu, gen, ser=None):
                     )
                 
                 #schedule next arrival
-                arrival_time = gen.exponential(1 / l)
+                arrival_time = np.random.exponential(1 / l)
                 my_queue.queue.put((current_Event.time + arrival_time, (Event(EventType.arrival, current_Event.time + arrival_time, current_Event.id + 1))))
 
             case EventType.departure:
@@ -121,9 +122,10 @@ def simulation(sim_time, l, mu, gen, ser=None):
                     queue_occupation.append(event)
 
                     if ser == "pareto":
-                        service_time = pareto_dist(1.5, 0.5)
+                        service_time = (np.random.pareto(1.5, 1) +1)*0.5
+                        #service_time = pareto_dist(1.5, 0.5)
                     else :
-                        service_time = gen.exponential(1 / mu)
+                        service_time = np.random.exponential(1 / mu)
 
                     packets[pending_packet.id]['server_time'] = system_time
                     packets[pending_packet.id]['departure_time'] = system_time + service_time
@@ -147,7 +149,7 @@ def simulation(sim_time, l, mu, gen, ser=None):
                 break 
 
         current_Event = my_queue.queue.get()[1]
-        system_time = current_Event.time   
+        system_time = float(current_Event.time )
 
     packets_save = pd.DataFrame(packets)
     queue_occupation_save = pd.DataFrame(queue_occupation)
@@ -168,8 +170,8 @@ def simulation(sim_time, l, mu, gen, ser=None):
 
     queue_occupation_save['packets_in_system'] = queue_occupation_save['packets_in_system'].tolist()
     
-    packets_save.to_csv("packets.csv", index=False)
-    queue_occupation_save.to_csv("queue_occupation.csv", index=False)
+    # packets_save.to_csv("packets.csv", index=False)
+    # queue_occupation_save.to_csv("queue_occupation.csv", index=False)
 
     return packets_save, queue_occupation_save
 

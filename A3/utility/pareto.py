@@ -1,8 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.stats import pareto
+
 
 
 def pareto_dist(a, m):
-    number = 0 # variable in wiìhich is the pareto dist number
-    return number
+    pareto_num = np.random.pareto(m= 0.5, a=1.5)
+    return pareto_num
