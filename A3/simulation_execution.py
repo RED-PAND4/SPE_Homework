@@ -10,7 +10,7 @@ from simulation import simulation
 from plotting import Plotting
 from plotting import *
 
-def simulation_plot(l, mu, sim_time, ser=None):
+def simulation_plot(l, mu, sim_time, lag, warmup, batch_size, ser=None):
     rho = l / mu
     
     
@@ -29,18 +29,9 @@ def simulation_plot(l, mu, sim_time, ser=None):
     queues.append(queue_occupation4)
     queues.append(queue_occupation5)
     
-    # total_width = np.sum(queue_occupation["width"].values)
-    # avg_packets_in_system_sim = (
-    #     np.sum(queue_occupation["packets_in_system"].values * queue_occupation["width"].values) / total_width
-    # )
-    
-    # print(
-    #     f"""Average number of packets in the queue (theory): {avg_packets_in_system_th} \t
-    #         Average number of packets in the queue (simulation): {avg_packets_in_system_sim}"""
-    # )
-    
+
     # Plotting
-    plots = Plotting(l, mu, sim_time, packets, queue_occupation)
+    plots = Plotting(l, mu, sim_time, packets, queue_occupation, ser)
     
     # Plot distribution of arrival times and service times just to check they follow theoretical distributions
     plots.plot_base_fun()
@@ -48,10 +39,8 @@ def simulation_plot(l, mu, sim_time, ser=None):
     plots.plot_mean_in_time(queues)
     
     
-    #plots.plot_system_occupation(avg_packets_in_system_sim)
-    
     # Plot autocorrelation to decide batch size for batch means
-    plots.plot_auto_correlation()
+    plots.plot_auto_correlation(lag)
     
     
     # batch variables
@@ -60,32 +49,36 @@ def simulation_plot(l, mu, sim_time, ser=None):
         ci_amplitude,
         batch_means,
         intervals,
-    ) = compute_batch_means_statistics(Statistics.PACKET_IN_SYSTEM, queue_occupation, 1000, 20000, 0.95)
+    ) = compute_batch_means_statistics(Statistics.PACKET_IN_SYSTEM, queue_occupation, batch_size, warmup, 0.95)
     #---
     
     
-    plots.plot_batch_means(
-        batch_means, intervals
-    )
+    plots.plot_batch_means(batch_means, intervals )
     
-    plots.plot_system_occupation(grand_mean)
+    plots.plot_system_occupation(grand_mean, queues[2])
 
     print(
-        f"""Average number of packets in the queue (theory): {avg_packets_in_system_th} \t
+        f"""Average number of packets in the queue (theory - no pareto): {avg_packets_in_system_th} \t
             Average number of packets in the queue with batch means(simulation): {grand_mean} +- {ci_amplitude}"""
     ) 
     
     
     plt.show()
 
-# setting simulation parameters
-# mandatory l < mu
-# l = 1 # other 3 value l=mu, l<<<<mu, ot
-# mu = 2 # other 3 value
-# sim_time =100000
-# gen = np.random.default_rng(seed=41)
 
-#simulation_plot(0.1, 2, 100000)
-simulation_plot(0.1, 2, 1000000, 'pareto')
-#simulation_plot(1.8, 2, 100000)
-#simulation_plot(1.99,2,100000)
+#l, mu, sim_time, lag, warm up, batch size, pareto
+simulation_plot(0.1, 2,  1000000, 30000, 10000, 5000)
+simulation_plot(1,   2,  100000,   400, 20000, 2000)
+simulation_plot(1.8, 2,  100000,   1300, 40000, 2500)
+simulation_plot(1.99, 2,  300000, 20000, 40000, 20000)
+
+
+
+simulation_plot(0.1, 2,  1000000, 30000, 10000, 5000)
+simulation_plot(0.1, 2, 1000000, 30000, 20000, 5000, "pareto")
+simulation_plot(0.2, 2, 1000000, 30000, 20000, 5000, "pareto")
+simulation_plot(0.2, 0.66,  1000000, 30000, 10000, 5000)
+simulation_plot(0.2, 0.66, 1000000, 30000, 20000, 5000, "pareto")
+
+
+
