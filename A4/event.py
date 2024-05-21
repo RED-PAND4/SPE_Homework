@@ -4,7 +4,7 @@ import numpy as np
 
 
 
-EventType = Enum("Type", "start reached speed stop")
+EventType = Enum("Type", "start reached speed distance stop")
 
 class Event:
     def __init__(self, type, time, id):

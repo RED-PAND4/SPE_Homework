@@ -10,8 +10,11 @@ import pandas as pd
 import numpy as np
 from queue import Queue
 from event import *
+from batch_means import compute_batch_means_statistics
+from plotting import *
 
-random.seed(42)  # for reproducibility
+
+#random.seed(42)  # for reproducibility
 
 def random_position():
     return (random.uniform(0, 1000), random.uniform(0, 1000))
@@ -64,7 +67,7 @@ def simulation(sim_time, num_nodes, v_min, v_max):
                 print("STARTING SIMULATION")
                 logging.info(f"Simulation started")
                 try:
-                    os.remove("packets.csv")
+                    os.remove("speeds.csv")
                     os.remove("log_events.csv")
                 except OSError:
                     pass
@@ -83,8 +86,12 @@ def simulation(sim_time, num_nodes, v_min, v_max):
                     log_events.append({'id': n, 'time_last_way': system_time, 'current point': nodes_pos[n], 'next point': nodes_next_pos[n], 'speed': nodes_speed[n]})
 
                 #events for speed
-                for i in range(5,sim_time, int(sim_time/100)):
+                for i in range(5,sim_time, 10):
                     my_queue.queue.put((i, Event(EventType.speed, i, -99)))
+                
+                #events for distance
+                # for i in range(1,sim_time):
+                #     my_queue.queue.put((i, Event(EventType.distance, i, -88)))
 
             case EventType.reached:
                 #print(f"ARRIVAL: Packet {current_Event.id} arrived at time {current_Event.time}")
@@ -102,7 +109,11 @@ def simulation(sim_time, num_nodes, v_min, v_max):
                 logging.info(f"SPEED")
                 for n in range(num_nodes):
                     speeds.append({'time':system_time,'id': n, 'speed': nodes_speed[n] })
-                
+            
+            case EventType.distance:
+                logging.info(f"Distance")
+
+
             case EventType.stop:
                 print("COMPLETE SIMULATION")
                 logging.info(f"Simulation completed")
@@ -132,25 +143,117 @@ def simulation(sim_time, num_nodes, v_min, v_max):
 
 
 
-num_nodes = 200
-sim_time = 10000
-v_min = 0
-v_max = 10
+num_nodes = 20
+sim_time = 100000
+# v_min = 0
+# v_max = 10
 
-speeds, log_events = simulation(sim_time, num_nodes, v_min, v_max)
+speeds, log_events = simulation(sim_time, num_nodes, 0, 10)
 
+plots = Plotting(sim_time, speeds)
+# Plot autocorrelation to decide batch size for batch means
+#plots.plot_auto_correlation(50)
+# batch variables
+(
+    grand_mean,
+    ci_amplitude,
+    batch_means,
+    intervals,
+) = compute_batch_means_statistics(Statistics.PACKET_IN_SYSTEM, speeds, 50, 20, 0.95)
+#---
+#plots.plot_batch_means(batch_means, intervals )
 
 speeds_mean = speeds.groupby(['time']).mean()
 speed_mean = speeds.mean()
-print(speeds_mean)
-print("Grand Mean:", speed_mean['speed'])
+#print(speeds_mean)
+print("Total Mean:", speed_mean['speed'])
+print(f"""Mean of the speed with batch means(simulation): {grand_mean} +- {ci_amplitude}"""
+    ) 
 fig, ax = plt.subplots()
 plt.plot(speeds_mean['speed'])
 ax.axhline(speed_mean['speed'], label="speed mean", color="b")
 
 
+speeds, log_events = simulation(sim_time, num_nodes, 1, 10)
 
-# frames =100
+
+plots = Plotting(sim_time, speeds)
+# Plot autocorrelation to decide batch size for batch means
+#plots.plot_auto_correlation(50)
+# batch variables
+(
+    grand_mean,
+    ci_amplitude,
+    batch_means,
+    intervals,
+) = compute_batch_means_statistics(Statistics.PACKET_IN_SYSTEM, speeds, 50, 20, 0.95)
+#---
+#plots.plot_batch_means(batch_means, intervals )
+
+speeds_mean = speeds.groupby(['time']).mean()
+speed_mean = speeds.mean()
+#print(speeds_mean)
+print("Total Mean:", speed_mean['speed'])
+print(f"""Mean of the speed with batch means(simulation): {grand_mean} +- {ci_amplitude}"""
+    ) 
+fig, ax = plt.subplots()
+plt.plot(speeds_mean['speed'])
+ax.axhline(speed_mean['speed'], label="speed mean", color="b")
+
+
+speeds, log_events = simulation(sim_time, num_nodes, 0, 50)
+
+
+plots = Plotting(sim_time, speeds)
+# Plot autocorrelation to decide batch size for batch means
+#plots.plot_auto_correlation(50)
+# batch variables
+(
+    grand_mean,
+    ci_amplitude,
+    batch_means,
+    intervals,
+) = compute_batch_means_statistics(Statistics.PACKET_IN_SYSTEM, speeds, 50, 20, 0.95)
+#---
+#plots.plot_batch_means(batch_means, intervals )
+
+speeds_mean = speeds.groupby(['time']).mean()
+speed_mean = speeds.mean()
+#print(speeds_mean)
+print("Total Mean:", speed_mean['speed'])
+print(f"""Mean of the speed with batch means(simulation): {grand_mean} +- {ci_amplitude}"""
+    ) 
+fig, ax = plt.subplots()
+plt.plot(speeds_mean['speed'])
+ax.axhline(speed_mean['speed'], label="speed mean", color="b")
+
+speeds, log_events = simulation(sim_time, num_nodes, 1, 50)
+
+
+plots = Plotting(sim_time, speeds)
+# Plot autocorrelation to decide batch size for batch means
+#plots.plot_auto_correlation(50)
+# batch variables
+(
+    grand_mean,
+    ci_amplitude,
+    batch_means,
+    intervals,
+) = compute_batch_means_statistics(Statistics.PACKET_IN_SYSTEM, speeds, 50, 20, 0.95)
+#---
+#plots.plot_batch_means(batch_means, intervals )
+
+speeds_mean = speeds.groupby(['time']).mean()
+speed_mean = speeds.mean()
+#print(speeds_mean)
+print("Total Mean:", speed_mean['speed'])
+print(f"""Mean of the speed with batch means(simulation): {grand_mean} +- {ci_amplitude}"""
+    ) 
+fig, ax = plt.subplots()
+plt.plot(speeds_mean['speed'])
+ax.axhline(speed_mean['speed'], label="speed mean", color="b")
+
+# frames =200
 # fig, ax = plt.subplots()
 
 # def update(i):
@@ -160,17 +263,19 @@ ax.axhline(speed_mean['speed'], label="speed mean", color="b")
 #     ax.set_ylim(0, 1000)
 
 # ani = animation.FuncAnimation(fig, update, frames=frames, interval=100)
-# ani.save('clear.gif', writer='pillow')
+#ani.save('clear.gif', writer='pillow')
 
 
 # numpoints = 200
 # ti = 0
 # points = log_events['current point']#np.random.random((2, numpoints))
+# df = pd.Series( (v[0] for v in points) )
 # colors = cm.rainbow(np.linspace(0, 1000, numpoints))
 # camera = Camera(plt.figure())
-# for _ in range(100):
+# for _ in range(500):
 #     log_events = log_events.loc[log_events['time_last_way'] > ti]
 #     points = log_events['current point']
+#     print(points)
 #     plt.scatter(*points, c=colors, s=100)
 #     camera.snap()
 #     ti +=100
