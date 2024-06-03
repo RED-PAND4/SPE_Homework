@@ -231,14 +231,16 @@ print("FINAL MEAN:", sum(media)/5)
 # ax.set_ylim(0, 5.5)
 
 
-trasmission_rate = trasmission.groupby(['id']).mean()
+trasmission_rate = trasmission.groupby(['id']).sum()
 print(trasmission_rate)
 
-total_trasmission=0
-for t in all_trasmission:
-    total_trasmission += t['Byte']
 
-print("TR in time: ", total_trasmission/sim_time)
+
+# total_trasmission=0
+# for t in all_trasmission:
+#     total_trasmission += t['Byte']
+
+print("TR in time: ", trasmission_rate.mean()['Byte'])
 
 
 plt.show()
