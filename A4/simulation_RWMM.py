@@ -16,8 +16,10 @@ from plotting import *
 def trasmitted_byte():
     mu = 1150
     sigma = 400
-    byte = random.uniform(1,9)
-    return byte
+    while True:
+        byte = np.random.normal(mu, sigma)
+        if byte>=0 and byte<=2300:
+            return byte
 
 def calculate_dist(point1, point2):
     return math.dist(point1, point2)
@@ -39,16 +41,11 @@ def time_calculation(point1, point2, speed):
     t = d/speed
     return t
 
-def simulation(sim_time, num_nodes, v_min, v_max):
+def simulation(sim_time, num_nodes, v_min, v_max, interval):
     try:
         os.remove("simulation.log")
     except OSError:
         pass
-    # State Variables during simulation
-    # location = (0,0)
-    # time_last_reached = 0
-    # next_waypoint = (0,0)
-    # current_speed = 0
 
     nodes_pos = []
     nodes_next_pos = []
@@ -91,9 +88,7 @@ def simulation(sim_time, num_nodes, v_min, v_max):
                     os.remove("trasmission.csv")
                 except OSError:
                     pass
-                """
-                Generate the first arrival event and put it in the queue.
-                """
+
                 # first arrival
                 nodes_pos = [random_position() for n in range(num_nodes)]
                 nodes_next_pos = [random_position() for n in range(num_nodes)]
@@ -109,12 +104,12 @@ def simulation(sim_time, num_nodes, v_min, v_max):
                     log_events.append({'id': n, 'time_last_way': system_time, 'current point': nodes_pos[n], 'next point': nodes_next_pos[n], 'speed': nodes_speed[n]})
 
                 #events for speed
-                for i in range(5,sim_time, 10):
-                    my_queue.queue.put((i, Event(EventType.speed, i, -99)))
+                for i in range(5,sim_time, interval):
+                    my_queue.queue.put((i+0.1, Event(EventType.speed, i+0.1, -99)))
                 
-                #events for distance
-                for i in range(10,sim_time,20):
-                    my_queue.queue.put((i, Event(EventType.distance, i, -88)))
+                #events for trasmission
+                for i in range(10,sim_time, 1):
+                    my_queue.queue.put((i, Event(EventType.trasmission, i, -88)))
 
             case EventType.reached:
                 #print(f"ARRIVAL: Packet {current_Event.id} arrived at time {current_Event.time}")
@@ -133,8 +128,8 @@ def simulation(sim_time, num_nodes, v_min, v_max):
                 for n in range(num_nodes):
                     speeds.append({'time':system_time,'id': n, 'speed': nodes_speed[n] })
             
-            case EventType.distance:
-                logging.info(f"Distance")
+            case EventType.trasmission:
+                logging.info(f"trasmission")
                 for n in range(num_nodes):
                     nodes_bearing[n] = get_bearing(nodes_pos[n][0], nodes_pos[n][1], nodes_next_pos[n][0], nodes_next_pos[n][1])
                     nodes_current_pos[n] = (nodes_pos[n][0] + nodes_speed[n]*math.cos(nodes_bearing[n]), nodes_pos[n][1] + nodes_speed[n]*math.sin(nodes_bearing[n]))
@@ -143,9 +138,9 @@ def simulation(sim_time, num_nodes, v_min, v_max):
                     for m in range(num_nodes):
                         if n != m:
                             dx = calculate_dist(nodes_current_pos[n], nodes_current_pos[m])
-                            #print("DISTANCE",dx)
+                            #print("trasmission",dx)
                             if dx<=50 and nodes_time_last_reached[n]<0:
-                                print(f"communaction {n} to {m}, distance {dx}")
+                                #print(f"communaction {n} to {m}, distance {dx}")
                                 logging.info(f"COMMUNICATION: Node {n} to Node {m}, distance {dx}")
                                 byte = trasmitted_byte()
                                 trasmission.append({'id': n, 'to': m, 'Byte': byte})
@@ -170,82 +165,80 @@ def simulation(sim_time, num_nodes, v_min, v_max):
     log_events_save = pd.DataFrame(log_events)
     trasmission_save = pd.DataFrame(trasmission)
 
-    #Drop NaN values, packet not served
-    # speeds_save.dropna(inplace=True)
-    # log_events_save.dropna(inplace=True)
-
-
-    speeds_save.to_csv("speeds.csv", index=False)
-    log_events_save.to_csv("log_events.csv", index=False)
-    trasmission_save.to_csv("trasmission.csv", index=False)
+    # speeds_save.to_csv("speeds.csv", index=False)
+    # log_events_save.to_csv("log_events.csv", index=False)
+    # trasmission_save.to_csv("trasmission.csv", index=False)
     print("returned")
     return speeds_save, log_events_save, trasmission_save
 
 
 
 num_nodes = 20
-sim_time = 10000
+sim_time = 5000
+interval = 5
 
+all_speeds = []
+all_log_events = []
+all_trasmission = []
 # VELOCITY 0-10
-speeds, log_events, trasmission = simulation(sim_time, num_nodes, 0, 10)
+for j in range(0,5):
+    speeds, log_events, trasmission = simulation(sim_time, num_nodes, 0, 10, interval)
+    all_speeds.append(speeds)
+    all_log_events.append(log_events)
+    all_trasmission.append(trasmission)
+
 
 plots = Plotting(sim_time, speeds)
-# Plot autocorrelation to decide batch size for batch means
-#plots.plot_auto_correlation(50)
-# batch variables
-# (
-#     grand_mean,
-#     ci_amplitude,
-#     batch_means,
-#     intervals,
-# ) = compute_batch_means_statistics(Statistics.PACKET_IN_SYSTEM, speeds, 50, 20, 0.95)
-#---
-#plots.plot_batch_means(batch_means, intervals )
+
+# speeds_mean = speeds.groupby(['time']).mean()
+# speeds_mean.reset_index()
+# print(speeds_mean)
+# node_speed_mean = speeds.groupby(['id']).mean()
+total_mean = [speeds.mean() for speeds in all_speeds]
+# print(node_speed_mean)
+# print(speeds[:2])
+# print(speeds['time'])
+
+[print("Total Mean:", total['speed']) for total in total_mean]
+
+media = [total['speed'] for total in total_mean]
+# media.mean()
+# for l in range(0,5):
+#     media += l["speed"]
+print("FINAL MEAN:", sum(media)/5)
 
 
-speeds_mean = speeds.groupby(['time']).mean()
-node_speed_mean = speeds.groupby(['id']).mean()
-total_mean = speeds.mean()
-print(node_speed_mean)
+# fig, ax = plt.subplots()
 
-print("Total Mean:", total_mean['speed'])
-# print(f"""Mean of the speed with batch means(simulation): {grand_mean} +- {ci_amplitude}"""
-#     ) 
-
-fig, ax = plt.subplots()
-plt.plot(speeds_mean['speed'])
-ax.axhline(total_mean['speed'], label="speed mean", color="b")
+# for speeds in all_speeds:
+#     avg_history=[]
+#     times = []
+#     tot_speed = 0
+#     ref_time=0
+#     for x, y in zip(speeds["time"],speeds["speed"]): 
+#         tot_speed += y
+#         time = x
+#         if time != ref_time:
+#             avg_history.append(tot_speed/(time*num_nodes*(1/interval)))
+#             times.append(time)
+#         ref_time= x
+#     plt.plot(times, avg_history, lw=0.8)
+# ax.axhline(sum(total['speed'] for total in total_mean)/5, label="speed mean", color="b", lw=0.9)
+# ax.set_title("Average speed over time")
+# ax.set_ylabel('Speed')
+# ax.set_xlabel("Simulation time")
+# ax.legend()  
+# ax.set_ylim(0, 5.5)
 
 
 trasmission_rate = trasmission.groupby(['id']).mean()
 print(trasmission_rate)
 
-# VELOCITY 1-10
-# speeds, log_events = simulation(sim_time, num_nodes, 1, 10)
+total_trasmission=0
+for t in all_trasmission:
+    total_trasmission += t['Byte']
+
+print("TR in time: ", total_trasmission/sim_time)
 
 
-# plots = Plotting(sim_time, speeds)
-# # Plot autocorrelation to decide batch size for batch means
-# #plots.plot_auto_correlation(50)
-# # batch variables
-# # (
-# #     grand_mean,
-# #     ci_amplitude,
-# #     batch_means,
-# #     intervals,
-# # ) = compute_batch_means_statistics(Statistics.PACKET_IN_SYSTEM, speeds, 50, 20, 0.95)
-# # #---
-# # #plots.plot_batch_means(batch_means, intervals )
-
-# speeds_mean = speeds.groupby(['time']).mean()
-# speed_mean = speeds.mean()
-# #print(speeds_mean)
-# print("Total Mean:", speed_mean['speed'])
-# # print(f"""Mean of the speed with batch means(simulation): {grand_mean} +- {ci_amplitude}"""
-# #     ) 
-# fig, ax = plt.subplots()
-# plt.plot(speeds_mean['speed'])
-# ax.axhline(speed_mean['speed'], label="speed mean", color="b")
-
-
-#plt.show()
+plt.show()
