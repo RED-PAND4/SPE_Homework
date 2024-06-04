@@ -7,7 +7,7 @@ from enum import Enum
 from statsmodels.graphics.tsaplots import plot_acf
 
 class Statistics(Enum):
-    PACKET_IN_SYSTEM = 0
+    NODES_SPEED = 0
 
 
 class Plotting:
