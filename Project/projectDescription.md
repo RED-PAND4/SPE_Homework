@@ -2,7 +2,7 @@
 
 # Barabási–Albert (BA) model
 
-Create a scale-free network  using the BA model(preferential attachment).
+Create a scale-free network using the BA model(preferential attachment).
 
 Preferential attachment means that the more connected a node is(higher degree or number of links), the more likely it is to receive new links.
 
@@ -10,7 +10,7 @@ Preferential attachment means that the more connected a node is(higher degree or
 
 We ask ourself: 
 
-- was is the relationship between number of nodes present and how many  well-connected nodes exists.
+- What is the relationship between number of nodes present and how many  well-connected nodes exists.
 - how the probability that a node will attach itself to a well-connected node increase based on the number of connection the node has
 - If the preferential attachment is non-linear, with a >>> or a<<<<
 - if there is no preferential attachment.
