@@ -11,58 +11,66 @@ import networkx as nx
 import random
 
 class Bianconi_Barabasi_network:
-    def __init__(self,n,m, distribution):
+    def __init__(self,n,m, dist):
+        # n = number of starting nodes in the nw
+        # m = number of connections a node can make when joining (< n)
+        # dist = distribution for the fitnesses
         self.nodes=[]
         self.edges=set()
-        self.distribution=distribution
+        self.distribution=dist
         self.m=m
         self.next_id=n
 
+        #Creation of the starting nodes
         for i in range(0,n,1):
             self.nodes.append(Node(i,self.distribution.rvs(size=1)))
+            ù
+        #Connectiong the starting nodes in a circular layout
         for i in range(0,n,1):
             if( ((i+1)%n, i) not in self.edges):
                 self.edges.add((i,(i+1)%n))
                 self.nodes[i].add_link()
                 self.nodes[(i+1)%n].add_link()
                 
+    #Print all nodes and connections
     def print_all(self):
         for n in self.nodes:
             n.print_node()
         print(self.edges)
 
+    #Print fitnesses of all nodes
     def print_fitnesses(self):
         for n in self.nodes:
             print("Fitness node ",n.id,":",n.fitness)
 
+    #Add a node to the network
     def add_node(self):
         node = Node(self.next_id,self.distribution.rvs(size=1))
         self.next_id+=1
         self.generate_links(node)
         self.nodes.append(node)
 
+    #Generating links for a new node
     def generate_links(self, new_node):
         connected=set()
         for _ in range(0,self.m,1):
             total=0
             comulative_prob=0
-            
-            x=random.random()
-            # print("x:",x)
-            # print("connected:",connected)
+
+            #Calculating the Sum(Ki*ni) (excluding nodes already connected to the new node)
             for n in self.nodes:
                 if n.id in connected:
                     continue
                 total+=n.fitness*n.links
-            # print("total:",total)
 
+            #randomly selecting a new node to connect to 
+            x=random.random()           
             for n in self.nodes:
                 if n.id in connected:
                     continue
                 comulative_prob+=(n.fitness*n.links)/total
                 # print("cumulative prob:",comulative_prob)
                 if (x<=comulative_prob):
-                    # print("found:",n.id)
                     connected.add(n.id)
                     n.add_link()
                     new_node.add_link()
@@ -117,6 +125,11 @@ class Bianconi_Barabasi_network:
         
 
     
+
+#Bianconi_Barabasi_network(n,m,dist)
+# n = number of starting nodes
+# m = number of connections every new node can make when joining the network. must be <=n
+# dist = distribution of the fitnesses. Must be >0
 
 # nw = Bianconi_Barabasi_network(15,7,uniform())
 # nw = Bianconi_Barabasi_network(15,7,expon())
