@@ -2,8 +2,10 @@ import numpy as np
 from node import Node
 from scipy.stats import uniform
 from scipy.stats import expon
+from scipy.stats import alpha
+from scipy.stats import arcsine
 import matplotlib.pyplot as plt
-from matplotlib.pyplot import figure, text
+from matplotlib.pyplot import text
 import matplotlib.colors as mcolors
 import networkx as nx
 import random
@@ -29,6 +31,10 @@ class Bianconi_Barabasi_network:
             n.print_node()
         print(self.edges)
 
+    def print_fitnesses(self):
+        for n in self.nodes:
+            print("Fitness node ",n.id,":",n.fitness)
+
     def add_node(self):
         node = Node(self.next_id,self.distribution.rvs(size=1))
         self.next_id+=1
@@ -37,12 +43,6 @@ class Bianconi_Barabasi_network:
 
     def generate_links(self, new_node):
         connected=set()
-        # while len(connected)<self.m:
-        #     total=0
-        #     for n in self.nodes:
-        #         if n.id not in connected:
-        #             total+=n.fitness*n.links
-
         for _ in range(0,self.m,1):
             total=0
             comulative_prob=0
@@ -90,7 +90,7 @@ class Bianconi_Barabasi_network:
         
         node_colors = [cmap(norm_degree) for norm_degree in norm_degrees]
 
-        node_sizes = [node_degrees[node] * 15 for node in G.nodes()]  # Scale node sizes
+        node_sizes = [(node_degrees[node]-self.m+3) * 15 for node in G.nodes()]  # Scale node sizes
 
         # Plot the graph
         # pos = nx.spring_layout(G, k=1)  # positions for all nodes
@@ -101,7 +101,7 @@ class Bianconi_Barabasi_network:
         nx.draw_networkx_nodes(G, pos, node_size=node_sizes, node_color=node_colors)
 
         # Draw the edges
-        nx.draw_networkx_edges(G, pos, width=0.5, alpha=0.5, edge_color='black')
+        nx.draw_networkx_edges(G, pos, width=0.3, alpha=0.5, edge_color='gray')
 
         # Draw the labels
         # nx.draw_networkx_labels(G, pos, font_size=12, font_family='sans-serif')
@@ -118,10 +118,14 @@ class Bianconi_Barabasi_network:
 
     
 
-nw = Bianconi_Barabasi_network(15,7,uniform())
-nw.print_all()
-for i in range(0,100,1):
+# nw = Bianconi_Barabasi_network(15,7,uniform())
+# nw = Bianconi_Barabasi_network(15,7,expon())
+# nw = Bianconi_Barabasi_network(15,7,alpha(a=1))
+nw = Bianconi_Barabasi_network(15,7,arcsine())
+# nw.print_all()
+for i in range(0,50,1):
     nw.add_node() 
 
 # nw.print_all()
+nw.print_fitnesses()
 nw.plot()
