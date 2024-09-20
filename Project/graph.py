@@ -20,12 +20,13 @@ class Bianconi_Barabasi_network:
         self.distribution=dist
         self.m=m
         self.next_id=n
+        self.probabilities_nodes = []
 
         #Creation of the starting nodes
         for i in range(0,n,1):
             self.nodes.append(Node(i,self.distribution.rvs(size=1)))
-            ù
-        #Connectiong the starting nodes in a circular layout
+            
+        #Connecting the starting nodes in a circular layout
         for i in range(0,n,1):
             if( ((i+1)%n, i) not in self.edges):
                 self.edges.add((i,(i+1)%n))
@@ -56,27 +57,27 @@ class Bianconi_Barabasi_network:
         for _ in range(0,self.m,1):
             total=0
             comulative_prob=0
-
             #Calculating the Sum(Ki*ni) (excluding nodes already connected to the new node)
             for n in self.nodes:
                 if n.id in connected:
                     continue
-                total+=n.fitness*n.links
-
+                total+=n.fitness*n.links 
+    
             #randomly selecting a new node to connect to 
             x=random.random()           
             for n in self.nodes:
                 if n.id in connected:
                     continue
                 comulative_prob+=(n.fitness*n.links)/total
-                # print("cumulative prob:",comulative_prob)
+                #print("cumulative prob:",comulative_prob)
+                self.probabilities_nodes.append({'time_new_node':len(self.nodes), 'node': n.id, 'probability': (n.fitness*n.links)/total})
                 if (x<=comulative_prob):
                     connected.add(n.id)
                     n.add_link()
                     new_node.add_link()
                     self.edges.add((new_node.id,n.id))
-
-                    break
+                    x=2
+                    #break
 
     def plot(self):
 
@@ -123,8 +124,27 @@ class Bianconi_Barabasi_network:
         plt.title("Graph Visualization with Node Sizes Based on Degree")
         plt.show()
         
+    def plot_probability_in_time(self, number_node):
+        f, ax = plt.subplots(1, figsize=(5, 5))
+        print(self.probabilities_nodes)
+        print("----")
+        node_prob = [prob["probability"] for prob in self.probabilities_nodes if prob["node"]==number_node]
+        print(node_prob)
+        #for prob in self.probabilities_nodes: 
+            # avg_history=[]
+            # tot_packet = 0
+            # for i in range(len(queue)):
+            #     tot_packet += queue["packets_in_system"][i]* queue["width"][i]
+            #     time = queue["time"][i] + queue["width"][i]
+            #     avg_history.append(tot_packet/time)
+            #if prob["node"]==number_node:
+                
+        plt.plot(node_prob)
+        ax.set_title("Probability in time")
+        ax.set_ylabel('Probability of Node')
+        ax.set_xlabel("new nodes")
 
-    
+
 
 #Bianconi_Barabasi_network(n,m,dist)
 # n = number of starting nodes
@@ -134,11 +154,13 @@ class Bianconi_Barabasi_network:
 # nw = Bianconi_Barabasi_network(15,7,uniform())
 # nw = Bianconi_Barabasi_network(15,7,expon())
 # nw = Bianconi_Barabasi_network(15,7,alpha(a=1))
-nw = Bianconi_Barabasi_network(15,7,arcsine())
+nw = Bianconi_Barabasi_network(5,3,arcsine())
 # nw.print_all()
-for i in range(0,50,1):
+for i in range(0,15,1):
     nw.add_node() 
 
 # nw.print_all()
 nw.print_fitnesses()
+#for n in nw.nodes:
+nw.plot_probability_in_time(6)
 nw.plot()
