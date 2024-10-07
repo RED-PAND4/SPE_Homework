@@ -37,7 +37,7 @@ class Bianconi_Barabasi_network:
     def print_all(self):
         for n in self.nodes:
             n.print_node()
-        print(self.edges)
+        # print(self.edges)
 
     #Print fitnesses of all nodes
     def print_fitnesses(self):
@@ -77,7 +77,7 @@ class Bianconi_Barabasi_network:
                     new_node.add_link()
                     self.edges.add((new_node.id,n.id))
                     x=2
-                    #break
+                    # break
 
     def plot(self):
 
@@ -126,9 +126,16 @@ class Bianconi_Barabasi_network:
         
     def plot_probability_in_time(self, number_node):
         f, ax = plt.subplots(1, figsize=(5, 5))
-        print(self.probabilities_nodes)
+        # print(self.probabilities_nodes)
         # print("----")
-        node_prob = [prob["probability"] for prob in self.probabilities_nodes if prob["node"]==number_node]
+        for x in self.probabilities_nodes:
+            print(x)
+        node_prob = [(prob["probability"], prob["time_new_node"]) for prob in self.probabilities_nodes if prob["node"]==number_node]
+        # node_prob = [(prob["probability"], prob["time_new_node"]) for prob in self.probabilities_nodes if prob["node"]==number_node]
+        # values = set(map(lambda x:x[1], node_prob))
+        # print(values)
+        # newlist = [[y[0] for y in node_prob if y[1]==x] for x in values]
+        # print(newlist)
         # print(node_prob)
         #for prob in self.probabilities_nodes: 
             # avg_history=[]
@@ -138,16 +145,17 @@ class Bianconi_Barabasi_network:
             #     time = queue["time"][i] + queue["width"][i]
             #     avg_history.append(tot_packet/time)
             #if prob["node"]==number_node:
-                
-        plt.plot(node_prob)
-        ax.set_title("Probability in time")
-        ax.set_ylabel('Probability of Node')
-        ax.set_xlabel("new nodes")
 
-    def plot_probability_top_fitness(self):
-        sorted_nodes = sorted(self.nodes, key=lambda node: node.fitness)
-        print(sorted_nodes[0].fitness)
-        self.plot_probability_in_time(sorted_nodes[0].id)
+                
+        # plt.plot(newlist)
+        # ax.set_title("Probability in time, node id:"+str(number_node))
+        # ax.set_ylabel('Probability of Node')
+        # ax.set_xlabel("new nodes")
+
+    def plot_probability_top_links(self):
+        sorted_nodes = sorted(self.nodes, key=lambda node: node.links)
+        print(sorted_nodes[-1].id)
+        self.plot_probability_in_time(sorted_nodes[-1].id)
 
 
 
@@ -157,11 +165,11 @@ class Bianconi_Barabasi_network:
 # dist = distribution of the fitnesses. Must be >0
 
 # nw = Bianconi_Barabasi_network(15,7,uniform())
-nw = Bianconi_Barabasi_network(15,7,expon())
+nw = Bianconi_Barabasi_network(3,2,expon())
 # nw = Bianconi_Barabasi_network(15,7,alpha(a=1))
 # nw = Bianconi_Barabasi_network(5,3,arcsine())
 # nw.print_all()
-for i in range(0,15,1):
+for i in range(0,2,1):
     nw.add_node() 
 
 # nw.print_all()
@@ -169,5 +177,5 @@ nw.print_fitnesses()
 #for n in nw.nodes:
 
 # nw.plot_probability_in_time(6)
-nw.plot_probability_top_fitness()
+nw.plot_probability_top_links()
 nw.plot()
