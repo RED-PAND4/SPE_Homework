@@ -19,3 +19,8 @@ We ask ourself:
 
 
 {See also the [Bianconi–Barabási model](https://en.m.wikipedia.org/wiki/Bianconi–Barabási_model) to see if it is better, they should be almost the same but each node has a parameter called fitness that influence the acquisition of a new link instead of just the degree}
+
+
+fare il fitting thella funzione di probabilita di essere scelto dal nodo con piu link
+
+trovare il punto in cui il super nodo ha la probabilità di essere scelto superiore al 99%
