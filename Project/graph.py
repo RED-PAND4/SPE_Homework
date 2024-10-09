@@ -22,6 +22,7 @@ class Bianconi_Barabasi_network:
         self.m=m
         self.next_id=n
         self.probabilities_nodes = []
+        self.chosen_nodes=[]
 
         #Creation of the starting nodes
         for i in range(0,n,1):
@@ -73,6 +74,7 @@ class Bianconi_Barabasi_network:
                 #print("cumulative prob:",comulative_prob)
                 self.probabilities_nodes.append({'time_new_node':len(self.nodes), 'node': n.id, 'probability': (n.fitness*n.links)/total})
                 if (x<=comulative_prob):
+                    self.chosen_nodes.append((n.links*n.fitness)/total)
                     connected.add(n.id)
                     n.add_link()
                     new_node.add_link()
@@ -108,8 +110,8 @@ class Bianconi_Barabasi_network:
         # Plot the graph
         # pos = nx.spring_layout(G, k=1)  # positions for all nodes
         # pos = nx.nx_pydot.graphviz_layout(G)
-        # pos = nx.kamada_kawai_layout(G)  # positions for all node
-        pos = nx.circular_layout(G)  # positions for all node
+        pos = nx.kamada_kawai_layout(G)  # positions for all node
+        # pos = nx.circular_layout(G)  # positions for all node
         # Draw the nodes with sizes based on degree
         nx.draw_networkx_nodes(G, pos, node_size=node_sizes, node_color=node_colors)
 
@@ -126,14 +128,13 @@ class Bianconi_Barabasi_network:
         fig.set_facecolor('white')
 
         plt.title("Graph Visualization with Node Sizes Based on Degree")
-        plt.show()
         
     def plot_probability_in_time(self, number_node):
         f, ax = plt.subplots(1, figsize=(5, 5))
         # print(self.probabilities_nodes)
         # print("----")
-        for x in self.probabilities_nodes:
-            print(x)
+        # for x in self.probabilities_nodes:
+        #     print(x)
         node_prob = [prob["probability"] for prob in self.probabilities_nodes if prob["node"]==number_node]
         # node_prob = [(prob["probability"], prob["time_new_node"]) for prob in self.probabilities_nodes if prob["node"]==number_node]
         # values = set(map(lambda x:x[1], node_prob))
@@ -150,21 +151,23 @@ class Bianconi_Barabasi_network:
         # print("groupby -- ")
         # print(newlist)
         # ax.plot(newlist.index, newlist.values, marker='o')
-        # ax.set_title("Probability in time, node id:"+str(number_node))
-        # ax.set_ylabel('Probability of Node')
-        # ax.set_xlabel("new nodes")
-
-                
+        ax.set_title("Probability in time, node id:"+str(number_node))
+        ax.set_ylabel('Probability of Node')
+        ax.set_xlabel("new nodes")
+         
         plt.plot(node_prob)
-        # ax.set_title("Probability in time, node id:"+str(number_node))
-        # ax.set_ylabel('Probability of Node')
-        # ax.set_xlabel("new nodes")
 
     def plot_probability_top_links(self):
         sorted_nodes = sorted(self.nodes, key=lambda node: node.links)
         print(sorted_nodes[-1].id)
         self.plot_probability_in_time(sorted_nodes[-1].id)
 
+    def plot_probability_of_chosen_nodes(self):
+        f, ax = plt.subplots(1, figsize=(5, 5))
+        ax.set_title("Probability of nodes at the time of choice")
+        ax.set_ylabel('Probability of Node')
+        ax.set_xlabel("new nodes")
+        plt.plot(self.chosen_nodes)
 
 
 #Bianconi_Barabasi_network(n,m,dist)
@@ -172,19 +175,21 @@ class Bianconi_Barabasi_network:
 # m = number of connections every new node can make when joining the network. must be <=n
 # dist = distribution of the fitnesses. Must be >0
 
-# nw = Bianconi_Barabasi_network(15,7,uniform())
-nw = Bianconi_Barabasi_network(3,3,expon())
+# nw = Bianconi_Barabasi_network(15,1,uniform())
+nw = Bianconi_Barabasi_network(3,1,expon())
 # nw = Bianconi_Barabasi_network(15,7,alpha(a=1))
 # nw = Bianconi_Barabasi_network(5,3,arcsine())
 # nw.print_all()
-for i in range(0,2,1):
+for i in range(0,10000,1):
     nw.add_node() 
 
 
 # nw.print_all()
-nw.print_fitnesses()
+# nw.print_fitnesses()
 #for n in nw.nodes:
 
 # nw.plot_probability_in_time(6)
 nw.plot_probability_top_links()
-nw.plot()
+nw.plot_probability_of_chosen_nodes()
+# nw.plot()
+plt.show()
