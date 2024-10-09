@@ -4,11 +4,13 @@ from scipy.stats import uniform
 from scipy.stats import expon
 from scipy.stats import alpha
 from scipy.stats import arcsine
+import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import text
 import matplotlib.colors as mcolors
 import networkx as nx
 import random
+from statsmodels.graphics.tsaplots import plot_acf
 
 class Bianconi_Barabasi_network:
     def __init__(self,n,m, dist):
@@ -78,7 +80,10 @@ class Bianconi_Barabasi_network:
                     self.edges.add((new_node.id,n.id))
                     x=2
                     # break
-
+        
+    def get_probabilities_nodes(self):
+        return pd.DataFrame(self.probabilities_nodes)
+    
     def plot(self):
 
         fig, ax = plt.subplots()
@@ -130,24 +135,24 @@ class Bianconi_Barabasi_network:
         # print("----")
         for x in self.probabilities_nodes:
             print(x)
-        node_prob = [(prob["probability"], prob["time_new_node"]) for prob in self.probabilities_nodes if prob["node"]==number_node]
+        # node_prob = [(prob["probability"], prob["time_new_node"]) for prob in self.probabilities_nodes if prob["node"]==number_node]
         # node_prob = [(prob["probability"], prob["time_new_node"]) for prob in self.probabilities_nodes if prob["node"]==number_node]
         # values = set(map(lambda x:x[1], node_prob))
         # print(values)
         # newlist = [[y[0] for y in node_prob if y[1]==x] for x in values]
         # print(newlist)
         # print(node_prob)
-        #for prob in self.probabilities_nodes: 
-            # avg_history=[]
-            # tot_packet = 0
-            # for i in range(len(queue)):
-            #     tot_packet += queue["packets_in_system"][i]* queue["width"][i]
-            #     time = queue["time"][i] + queue["width"][i]
-            #     avg_history.append(tot_packet/time)
-            #if prob["node"]==number_node:
+
+        newlist= self.get_probabilities_nodes()
+        newlist = newlist[newlist['node']==number_node]
+        newlist = newlist.groupby('time_new_node')['probability'].sum()
+        ax.plot(newlist.index, newlist.values, marker='o')
+        ax.set_title("Probability in time, node id:"+str(number_node))
+        ax.set_ylabel('Probability of Node')
+        ax.set_xlabel("new nodes")
 
                 
-        # plt.plot(newlist)
+        plt.plot(newlist)
         # ax.set_title("Probability in time, node id:"+str(number_node))
         # ax.set_ylabel('Probability of Node')
         # ax.set_xlabel("new nodes")
@@ -165,12 +170,13 @@ class Bianconi_Barabasi_network:
 # dist = distribution of the fitnesses. Must be >0
 
 # nw = Bianconi_Barabasi_network(15,7,uniform())
-nw = Bianconi_Barabasi_network(3,2,expon())
+nw = Bianconi_Barabasi_network(3,3,expon())
 # nw = Bianconi_Barabasi_network(15,7,alpha(a=1))
 # nw = Bianconi_Barabasi_network(5,3,arcsine())
 # nw.print_all()
 for i in range(0,2,1):
     nw.add_node() 
+
 
 # nw.print_all()
 nw.print_fitnesses()
