@@ -10,7 +10,6 @@ from matplotlib.pyplot import text
 import matplotlib.colors as mcolors
 import networkx as nx
 import random
-from statsmodels.graphics.tsaplots import plot_acf
 
 class Bianconi_Barabasi_network:
     def __init__(self,n,m, dist):
@@ -135,7 +134,7 @@ class Bianconi_Barabasi_network:
         # print("----")
         for x in self.probabilities_nodes:
             print(x)
-        # node_prob = [(prob["probability"], prob["time_new_node"]) for prob in self.probabilities_nodes if prob["node"]==number_node]
+        node_prob = [prob["probability"] for prob in self.probabilities_nodes if prob["node"]==number_node]
         # node_prob = [(prob["probability"], prob["time_new_node"]) for prob in self.probabilities_nodes if prob["node"]==number_node]
         # values = set(map(lambda x:x[1], node_prob))
         # print(values)
@@ -143,16 +142,20 @@ class Bianconi_Barabasi_network:
         # print(newlist)
         # print(node_prob)
 
-        newlist= self.get_probabilities_nodes()
-        newlist = newlist[newlist['node']==number_node]
-        newlist = newlist.groupby('time_new_node')['probability'].sum()
-        ax.plot(newlist.index, newlist.values, marker='o')
-        ax.set_title("Probability in time, node id:"+str(number_node))
-        ax.set_ylabel('Probability of Node')
-        ax.set_xlabel("new nodes")
+        # newlist = self.get_probabilities_nodes()
+        # newlist = newlist[newlist['node']==number_node]
+        # print("only the node -- ")
+        # print(newlist)
+        # newlist = newlist.groupby('time_new_node')['probability'].sum()
+        # print("groupby -- ")
+        # print(newlist)
+        # ax.plot(newlist.index, newlist.values, marker='o')
+        # ax.set_title("Probability in time, node id:"+str(number_node))
+        # ax.set_ylabel('Probability of Node')
+        # ax.set_xlabel("new nodes")
 
                 
-        plt.plot(newlist)
+        plt.plot(node_prob)
         # ax.set_title("Probability in time, node id:"+str(number_node))
         # ax.set_ylabel('Probability of Node')
         # ax.set_xlabel("new nodes")
