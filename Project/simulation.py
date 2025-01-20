@@ -14,8 +14,11 @@ def run_printed_simulation(m, n, distribution):
     nw = Bianconi_Barabasi_network(m,distribution)
     for _ in range(0,n,1):
         nw.add_node() 
-    nw.print_fitnesses()
-    nw.plot()
+    # nw.print_fitnesses()
+    # nw.plot()
+    nw.print_top(30)
+    nw.plot_all()
+    # nw.plot_npm_of_chosen_nodes()
 
 #creates a simulation of the model without printing the final network.
 # m: the number of connection a node will make
@@ -30,7 +33,7 @@ def run_printless_simulation(m, n, distribution, top):
 
 
 constant = rv_discrete(name='constant', values=([1], [1.0]))
-run_printed_simulation(7,3, uniform)
+run_printed_simulation(7,10, arcsine())
 # run_printless_simulation(7,1, uniform, 50)
 
 

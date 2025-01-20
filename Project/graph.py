@@ -1,20 +1,26 @@
 import numpy as np
 from node import Node
+import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import text
 import matplotlib.colors as mcolors
 from matplotlib.animation import FuncAnimation
+from matplotlib.widgets import Button
 import networkx as nx
 import random
+import pandas as pd
 
 class Bianconi_Barabasi_network:
     def __init__(self,m, distribution):
         self.nodes=[]
-        self.edges=set()
+        self.edges=list()
         self.distribution=distribution
         self.connections_number = m
         self.next_id=0
-        
+        self.probabilities_nodes=[]
+        self.chosen_nodes=[]
+        self.G = nx.Graph()
+        self.fig, self.ax = plt.subplots()
         for _ in range(0,m,1):
             self.add_node()
             # self.print_all()
@@ -25,13 +31,13 @@ class Bianconi_Barabasi_network:
         #         self.edges.add((i,(i+1)%n))
         #         self.nodes[i].add_link()
         #         self.nodes[(i+1)%n].add_link()
-                
+        # plt.ion()        
     #Print all nodes and connections
     def print_all(self):
         for n in self.nodes:
             n.print_node()
         # print(self.edges)
-
+    # plt.ion()
     #Print fitnesses of all nodes
     def print_fitnesses(self):
         for n in self.nodes:
@@ -65,7 +71,7 @@ class Bianconi_Barabasi_network:
             if(len(self.nodes)==1):
                 self.nodes[0].add_link()
                 new_node.add_link()
-                self.edges.add((new_node.id,self.nodes[0].id))
+                self.edges.append((new_node.id,self.nodes[0].id))
             # if(len(self))
             # print("x:",x)
             # print("connected:",connected)
@@ -82,30 +88,31 @@ class Bianconi_Barabasi_network:
                     continue
                 comulative_prob+=(n.fitness*n.links)/total
                 #print("cumulative prob:",comulative_prob)
-                self.probabilities_nodes.append({'time_new_node':len(self.nodes), 'node': n.id, 'probability': (n.fitness*n.links)/total})
                 if (x<=comulative_prob):
+                    self.probabilities_nodes.append({'time_new_node':len(self.nodes), 'node': n.id, 'probability': (n.fitness*n.links)/total, 'chosen':True})
+                    self.probabilities_nodes[-1]
                     self.chosen_nodes.append((n.links*n.fitness)/total)
                     connected.add(n.id)
                     n.add_link()
                     new_node.add_link()
-                    self.edges.add((new_node.id,n.id))
+                    self.edges.append((new_node.id,n.id))
                     x=2
                     # break
+                else:
+                    self.probabilities_nodes.append({'time_new_node':len(self.nodes), 'node': n.id, 'probability': (n.fitness*n.links)/total, 'chosen':False})
         
     def get_probabilities_nodes(self):
         return pd.DataFrame(self.probabilities_nodes)
     
     def plot(self):
 
-        fig, ax = plt.subplots()
-
-
-        G = nx.Graph()
+        # fig, ax = plt.subplots()
+        print("a")
         for n in self.nodes:
-            G.add_node(n.id)
-        G.add_edges_from(self.edges)
+            self.G.add_node(n.id)
+        self.G.add_edges_from(self.edges)
         # Calculate node sizes based on degree
-        node_degrees = dict(G.degree())  # Get the degree of each node
+        node_degrees = dict(self.G.degree())  # Get the degree of each node
         degrees = np.array(list(node_degrees.values()))
         min_degree = degrees.min()
         max_degree = degrees.max()
@@ -115,30 +122,82 @@ class Bianconi_Barabasi_network:
         
         node_colors = [cmap(norm_degree) for norm_degree in norm_degrees]
 
-        node_sizes = [(node_degrees[node]-self.connections_number+3) * 15 for node in G.nodes()]  # Scale node sizes
+        node_sizes = [(node_degrees[node]-self.connections_number+3) * 15 for node in self.G.nodes()]  # Scale node sizes
+
+        self.ax.clear()
 
         # Plot the graph
-        # pos = nx.spring_layout(G, k=1)  # positions for all nodes
-        # pos = nx.nx_pydot.graphviz_layout(G)
-        pos = nx.kamada_kawai_layout(G)  # positions for all node
-        # pos = nx.circular_layout(G)  # positions for all node
+        # pos = nx.spring_layout(self.G, k=1.8)  # positions for all nodes
+        # pos = nx.nx_pydot.graphviz_layout(self.G)
+        # pos = nx.kamada_kawai_layout(self.G)  # positions for all node
+        pos = nx.circular_layout(self.G)  # positions for all node
         # Draw the nodes with sizes based on degree
-        nx.draw_networkx_nodes(G, pos, node_size=node_sizes, node_color=node_colors)
+        nx.draw_networkx_nodes(self.G, pos, node_size=node_sizes, node_color=node_colors)
 
         # Draw the edges
-        nx.draw_networkx_edges(G, pos, width=0.3, alpha=0.5, edge_color='gray')
+        nx.draw_networkx_edges(self.G, pos, width=0.3, alpha=0.5, edge_color='gray')
 
         # Draw the labels
-        # nx.draw_networkx_labels(G, pos, font_size=12, font_family='sans-serif')
+        # nx.draw_networkx_labels(self.G, pos, font_size=12, font_family='sans-serif')
 
         for node, (x, y) in pos.items():
            text(x, y, node, fontsize=np.log(node_sizes[node]*50), ha='center', va='center')
         # Show the plot
-        ax.axis('off')
-        fig.set_facecolor('white')
+        self.ax.axis('off')
+        self.fig.set_facecolor('white')
 
         plt.title("Graph Visualization with Node Sizes Based on Degree")
-        
+
+        btn_ax = self.fig.add_axes([0.05, 0.08, 0.15, 0.08])
+        # axprev = fig.add_axes([0.81, 0.05, 0.1, 0.075])
+        new_node_btn = Button(btn_ax, 'Add node')
+        new_node_btn.on_clicked(self.update_graph_new_node)
+
+
+        plt.show()
+
+
+    def update_graph_new_node(self, event):
+        # Add a new node and update the graph
+        new_node_id = self.nodes[-1].id
+        new_node_fitness = self.nodes[-1].fitness
+        self.add_node()
+        self.G.add_node(new_node_id)
+        self.G.add_edges_from(self.edges[-self.connections_number:])
+
+        # Recalculate node sizes and colors
+        node_degrees = dict(self.G.degree())
+        degrees = np.array(list(node_degrees.values()))
+        min_degree = degrees.min()
+        max_degree = degrees.max()
+        if max_degree == min_degree:
+            norm_degrees = np.zeros_like(degrees)
+        else:
+            norm_degrees = (degrees - min_degree) / (max_degree - min_degree)
+
+        cmap = mcolors.LinearSegmentedColormap.from_list("my_cmap", ["red", "yellow", "green"])
+        node_colors = [cmap(norm_degree) for norm_degree in norm_degrees]
+        node_sizes = [(node_degrees[node]-self.connections_number+3) * 15 for node in self.G.nodes()]  # Scale node sizes
+
+        # Clear and redraw the graph
+        self.ax.clear()
+        pos = nx.circular_layout(self.G)
+        nx.draw_networkx_nodes(self.G, pos, node_size=node_sizes, node_color=node_colors, ax=self.ax)
+        nx.draw_networkx_edges(self.G, pos, width=0.3, alpha=0.5, edge_color="gray", ax=self.ax)
+        for node, (x, y) in pos.items():
+            self.ax.text(x, y, node, fontsize=np.log(node_sizes[node]*50), ha='center', va='center')
+        s = "Added node "+str(new_node_id)+" with fitness = "+str(new_node_fitness)
+        # Refresh the plot
+        self.ax.axis("off")
+        self.ax.text(0.1, 0.0, s, fontsize=10, ha='left', va='bottom', transform=self.ax.transAxes)
+        self.fig.canvas.draw()
+    
+    def plot_probability_top_links(self):
+        sorted_nodes = sorted(self.nodes, key=lambda node: node.links)
+        print(sorted_nodes[-1].id)
+        self.plot_probability_in_time(sorted_nodes[-1].id)
+
+    #Plot probability of being chosen of the top node
     def plot_probability_in_time(self, number_node):
         f, ax = plt.subplots(1, figsize=(5, 5))
         # print(self.probabilities_nodes)
@@ -166,3 +225,17 @@ class Bianconi_Barabasi_network:
         ax.set_xlabel("new nodes")
          
         plt.plot(node_prob)
+
+    #Shows the pprobability that each chosen node had when it was chosen
+    def plot_probability_of_chosen_nodes(self):
+        f, ax = plt.subplots(1, figsize=(5, 5))
+        ax.set_title("Probability of nodes at the time of choice")
+        ax.set_ylabel('Probability of Node')
+        ax.set_xlabel("new nodes")
+        plt.plot(self.chosen_nodes)
+
+    def plot_all(self):
+        self.plot()
+        self.plot_probability_top_links()
+        self.plot_probability_of_chosen_nodes()
+        plt.show()
