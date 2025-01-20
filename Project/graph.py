@@ -1,39 +1,30 @@
 import numpy as np
 from node import Node
-from scipy.stats import uniform
-from scipy.stats import expon
-from scipy.stats import alpha
-from scipy.stats import arcsine
-import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import text
 import matplotlib.colors as mcolors
+from matplotlib.animation import FuncAnimation
 import networkx as nx
 import random
 
 class Bianconi_Barabasi_network:
-    def __init__(self,n,m, dist):
-        # n = number of starting nodes in the nw
-        # m = number of connections a node can make when joining (< n)
-        # dist = distribution for the fitnesses
+    def __init__(self,m, distribution):
         self.nodes=[]
         self.edges=set()
-        self.distribution=dist
-        self.m=m
-        self.next_id=n
-        self.probabilities_nodes = []
-        self.chosen_nodes=[]
-
-        #Creation of the starting nodes
-        for i in range(0,n,1):
-            self.nodes.append(Node(i,self.distribution.rvs(size=1)))
-            
-        #Connecting the starting nodes in a circular layout
-        for i in range(0,n,1):
-            if( ((i+1)%n, i) not in self.edges):
-                self.edges.add((i,(i+1)%n))
-                self.nodes[i].add_link()
-                self.nodes[(i+1)%n].add_link()
+        self.distribution=distribution
+        self.connections_number = m
+        self.next_id=0
+        
+        for _ in range(0,m,1):
+            self.add_node()
+            # self.print_all()
+        # for i in range(0,n,1):
+        #     self.nodes.append(Node(i,self.distribution.rvs(size=1)))
+        # for i in range(0,n,1):
+        #     if( ((i+1)%n, i) not in self.edges):
+        #         self.edges.add((i,(i+1)%n))
+        #         self.nodes[i].add_link()
+        #         self.nodes[(i+1)%n].add_link()
                 
     #Print all nodes and connections
     def print_all(self):
@@ -46,20 +37,39 @@ class Bianconi_Barabasi_network:
         for n in self.nodes:
             print("Fitness node ",n.id,":",n.fitness)
 
-    #Add a node to the network
+    def print_top(self,n):
+        sorted_nodes = sorted(self.nodes, key=lambda x: x.links, reverse=True)
+        for x in sorted_nodes[:n]:
+            print("Node: ", x.id,", Links: ",x.links, ", Fitness: ",x.fitness)
+
     def add_node(self):
         node = Node(self.next_id,self.distribution.rvs(size=1))
+        # print("Sono qui")
         self.next_id+=1
         self.generate_links(node)
         self.nodes.append(node)
 
     #Generating links for a new node
     def generate_links(self, new_node):
+        # print("generando links")
         connected=set()
-        for _ in range(0,self.m,1):
+        for _ in range(0,self.connections_number,1):
             total=0
             comulative_prob=0
-            #Calculating the Sum(Ki*ni) (excluding nodes already connected to the new node)
+            
+            x=random.random()
+            # print("len connected:",len(connected), " len(self.nodes):",len(self.nodes))
+            if(len(connected) == len(self.nodes)):
+                break
+
+            if(len(self.nodes)==1):
+                self.nodes[0].add_link()
+                new_node.add_link()
+                self.edges.add((new_node.id,self.nodes[0].id))
+            # if(len(self))
+            # print("x:",x)
+            # print("connected:",connected)
+            # print("Generating anyway")
             for n in self.nodes:
                 if n.id in connected:
                     continue
@@ -105,7 +115,7 @@ class Bianconi_Barabasi_network:
         
         node_colors = [cmap(norm_degree) for norm_degree in norm_degrees]
 
-        node_sizes = [(node_degrees[node]-self.m+3) * 15 for node in G.nodes()]  # Scale node sizes
+        node_sizes = [(node_degrees[node]-self.connections_number+3) * 15 for node in G.nodes()]  # Scale node sizes
 
         # Plot the graph
         # pos = nx.spring_layout(G, k=1)  # positions for all nodes
@@ -156,40 +166,3 @@ class Bianconi_Barabasi_network:
         ax.set_xlabel("new nodes")
          
         plt.plot(node_prob)
-
-    def plot_probability_top_links(self):
-        sorted_nodes = sorted(self.nodes, key=lambda node: node.links)
-        print(sorted_nodes[-1].id)
-        self.plot_probability_in_time(sorted_nodes[-1].id)
-
-    def plot_probability_of_chosen_nodes(self):
-        f, ax = plt.subplots(1, figsize=(5, 5))
-        ax.set_title("Probability of nodes at the time of choice")
-        ax.set_ylabel('Probability of Node')
-        ax.set_xlabel("new nodes")
-        plt.plot(self.chosen_nodes)
-
-
-#Bianconi_Barabasi_network(n,m,dist)
-# n = number of starting nodes
-# m = number of connections every new node can make when joining the network. must be <=n
-# dist = distribution of the fitnesses. Must be >0
-
-# nw = Bianconi_Barabasi_network(15,1,uniform())
-nw = Bianconi_Barabasi_network(3,1,expon())
-# nw = Bianconi_Barabasi_network(15,7,alpha(a=1))
-# nw = Bianconi_Barabasi_network(5,3,arcsine())
-# nw.print_all()
-for i in range(0,10000,1):
-    nw.add_node() 
-
-
-# nw.print_all()
-# nw.print_fitnesses()
-#for n in nw.nodes:
-
-# nw.plot_probability_in_time(6)
-nw.plot_probability_top_links()
-nw.plot_probability_of_chosen_nodes()
-# nw.plot()
-plt.show()
