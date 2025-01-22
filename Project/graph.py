@@ -11,6 +11,8 @@ import random
 import pandas as pd
 import threading
 import time
+import mplcursors
+
 
 class Bianconi_Barabasi_network:
     def __init__(self,m, distribution):
@@ -24,7 +26,8 @@ class Bianconi_Barabasi_network:
         self.G = nx.Graph()
         self.fig, self.ax = plt.subplots()
         self.running = False
-
+        self.annotation = None
+        
         for _ in range(0,m,1):
             self.add_node()
             # self.print_all()
@@ -111,66 +114,6 @@ class Bianconi_Barabasi_network:
     def get_probabilities_nodes(self):
         return pd.DataFrame(self.probabilities_nodes)
     
-    def plot(self):
-
-        # fig, ax = plt.subplots()
-        print("a")
-        for n in self.nodes:
-            self.G.add_node(n.id)
-        self.G.add_edges_from(self.edges)
-        # Calculate node sizes based on degree
-        node_degrees = dict(self.G.degree())  # Get the degree of each node
-        degrees = np.array(list(node_degrees.values()))
-        min_degree = degrees.min()
-        max_degree = degrees.max()
-        norm_degrees = (degrees - min_degree) / (max_degree - min_degree)
-
-        cmap = mcolors.LinearSegmentedColormap.from_list("my_cmap", ["red", "yellow", "green"])
-        
-        node_colors = [cmap(norm_degree) for norm_degree in norm_degrees]
-
-        node_sizes = [(node_degrees[node]-self.connections_number+3) * 15 for node in self.G.nodes()]  # Scale node sizes
-
-        self.ax.clear()
-
-        # Plot the graph
-        # pos = nx.spring_layout(self.G, k=1.8)  # positions for all nodes
-        # pos = nx.nx_pydot.graphviz_layout(self.G)
-        # pos = nx.kamada_kawai_layout(self.G)  # positions for all node
-        pos = nx.circular_layout(self.G)  # positions for all node
-        # Draw the nodes with sizes based on degree
-        nx.draw_networkx_nodes(self.G, pos, node_size=node_sizes, node_color=node_colors)
-
-        # Draw the edges
-        nx.draw_networkx_edges(self.G, pos, width=0.3, alpha=0.5, edge_color='gray')
-
-        # Draw the labels
-        # nx.draw_networkx_labels(self.G, pos, font_size=12, font_family='sans-serif')
-
-        for node, (x, y) in pos.items():
-           text(x, y, node, fontsize=np.log(node_sizes[node]*50), ha='center', va='center')
-        # Show the plot
-        self.ax.axis('off')
-        self.fig.set_facecolor('white')
-
-        plt.title("Graph Visualization with Node Sizes Based on Degree")
-
-        btn_ax = self.fig.add_axes([0.05, 0.08, 0.15, 0.08])
-        start_btn_ax = self.fig.add_axes([0.85, 0.23, 0.10, 0.08])
-        stop_btn_ax = self.fig.add_axes([0.85, 0.08, 0.10, 0.08])
-
-        # axprev = fig.add_axes([0.81, 0.05, 0.1, 0.075])
-        new_node_btn = Button(btn_ax, 'Add node')
-        new_node_btn.on_clicked(self.update_graph_new_node)
-
-        start_btn = Button(start_btn_ax, 'Start')
-        start_btn.on_clicked(self.start_loop)
-
-        stop_btn = Button(stop_btn_ax, 'Stop')
-        stop_btn.on_clicked(self.stop_loop)
-
-
-        plt.show()
     
     def loop_task(self):
         """This is the task that will run in a loop."""
@@ -190,14 +133,22 @@ class Bianconi_Barabasi_network:
         """Stop the loop by setting the flag to False."""
         self.running = False
         print("Stopped loop.")
-
+        
     def update_graph_new_node(self, event):
-        # Add a new node and update the graph
-        new_node_id = self.nodes[-1].id
-        new_node_fitness = self.nodes[-1].fitness
-        self.add_node()
-        self.G.add_node(new_node_id)
-        self.G.add_edges_from(self.edges[-self.connections_number:])
+        adding = False
+        if(self.G.number_of_nodes() == 0):
+            print("First time")
+            for n in self.nodes:
+                self.G.add_nodes_from([(n.id, {"info":"fitness:"+str(n.fitness)})])
+            self.G.add_edges_from(self.edges)
+        else:
+            print("Not first time")
+            new_node_id = self.nodes[-1].id
+            new_node_fitness = self.nodes[-1].fitness
+            self.add_node()
+            self.G.add_nodes_from([(new_node_id, {"info":"fitness:"+str(new_node_fitness)})])
+            self.G.add_edges_from(self.edges[-self.connections_number:])
+            adding = True
 
         # Recalculate node sizes and colors
         node_degrees = dict(self.G.degree())
@@ -215,19 +166,65 @@ class Bianconi_Barabasi_network:
 
         # Clear and redraw the graph
         self.ax.clear()
+        self.ax.set_title("Graph Visualization with Node Sizes Based on Degree")
+
         pos = nx.circular_layout(self.G)
-        nx.draw_networkx_nodes(self.G, pos, node_size=node_sizes, node_color=node_colors, ax=self.ax)
-        nx.draw_networkx_edges(self.G, pos, edgelist = self.edges[:-self.connections_number], width=0.3, alpha=0.5, edge_color="gray", ax=self.ax)
-        nx.draw_networkx_edges(self.G, pos, edgelist = self.edges[-self.connections_number:], width=0.5, alpha=0.5, edge_color="red", ax=self.ax)
+        scatter = nx.draw_networkx_nodes(self.G, pos, node_size=node_sizes, node_color=node_colors, ax=self.ax)
+        
+        if(adding):
+            nx.draw_networkx_edges(self.G, pos, edgelist = self.edges[:-self.connections_number], width=0.3, alpha=0.5, edge_color="gray", ax=self.ax)
+            nx.draw_networkx_edges(self.G, pos, edgelist = self.edges[-self.connections_number:], width=0.5, alpha=0.5, edge_color="red", ax=self.ax)
+            s = "Added node "+str(new_node_id)+" with fitness = "+str(new_node_fitness)
+            # Refresh the plot
+            self.ax.axis("off")
+        else:
+            self.ax.axis('off')
+            self.fig.set_facecolor('white')
+
+            nx.draw_networkx_edges(self.G, pos, width=0.3, alpha=0.5, edge_color='gray')
+
+        # Create buttons only once when the graph is initialized (not on every update)
+        if not hasattr(self, 'buttons_created'):  # Check if buttons are already created
+            self.buttons_created = True
+            btn_ax = self.fig.add_axes([0.05, 0.08, 0.15, 0.08])
+            start_btn_ax = self.fig.add_axes([0.85, 0.23, 0.10, 0.08])
+            stop_btn_ax = self.fig.add_axes([0.85, 0.08, 0.10, 0.08])
+
+            new_node_btn = Button(btn_ax, 'Add node')
+            new_node_btn.on_clicked(self.update_graph_new_node)
+
+            start_btn = Button(start_btn_ax, 'Start')
+            start_btn.on_clicked(self.start_loop)
+
+            stop_btn = Button(stop_btn_ax, 'Stop')
+            stop_btn.on_clicked(self.stop_loop)
 
         for node, (x, y) in pos.items():
             self.ax.text(x, y, node, fontsize=np.log(node_sizes[node]*50), ha='center', va='center')
-        s = "Added node "+str(new_node_id)+" with fitness = "+str(new_node_fitness)
-        # Refresh the plot
-        self.ax.axis("off")
-        self.ax.text(0.1, 0.0, s, fontsize=10, ha='left', va='bottom', transform=self.ax.transAxes)
-        self.fig.canvas.draw()
-    
+            
+        cursor = mplcursors.cursor(scatter, hover=True)
+        cursor.connect("add", self.custom_annotation)    
+        self.fig.canvas.mpl_connect("button_press_event", self.remove_annotation)  # Clear annotation when clicking background
+
+        if(not adding):
+            plt.show()  
+        else:
+            self.fig.canvas.draw()
+
+
+    def custom_annotation(self, sel):
+        if (self.annotation):
+            self.annotation.set_visible(False)
+            self.fig.canvas.draw_idle()  
+
+        sel.annotation.set_text("Fitness:\n"+str(self.nodes[sel.index].fitness))
+        # sel.annotation.set_text(f"Node: {sel.index + 1}")
+        self.annotation = sel.annotation  # Save a reference to the annotation
+
+    def remove_annotation(self, event):
+        if self.annotation:  # If there's an annotation, clear it
+            self.annotation.set_visible(False)
+            self.fig.canvas.draw_idle()  
     def plot_probability_top_links(self):
         sorted_nodes = sorted(self.nodes, key=lambda node: node.links)
         print(sorted_nodes[-1].id)
@@ -271,7 +268,7 @@ class Bianconi_Barabasi_network:
         plt.plot(self.chosen_nodes)
 
     def plot_all(self):
-        self.plot()
+        self.update_graph_new_node(None)
         self.plot_probability_top_links()
         self.plot_probability_of_chosen_nodes()
         plt.show()

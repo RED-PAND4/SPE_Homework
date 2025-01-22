@@ -7,6 +7,7 @@ from scipy.stats import rv_discrete
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
+constant = rv_discrete(name='constant', values=([1], [1.0]))
 
 
 #creates a simulation of the model printing the final network.
@@ -14,7 +15,6 @@ from scipy.optimize import curve_fit
 # n: the number of new nodes to be added
 # distribution: the distribution used to generate the fitnesses
 def run_printed_simulation(m, n, distribution):
-    nw = Bianconi_Barabasi_network(m,distribution)
     for _ in range(0,n,1):
         nw.add_node() 
     # nw.print_fitnesses()
@@ -31,7 +31,7 @@ def run_printed_simulation(m, n, distribution):
 # distribution: the distribution used to generate the fitnesses
 # top: the number of nodes with the highest fitness to be printed
 def run_printless_simulation(m, n, distribution, top):
-    nw = Bianconi_Barabasi_network(m,distribution)
+    
     for _ in range(0,n,1):
         nw.add_node() 
     nw.print_top(top)
@@ -40,7 +40,7 @@ def run_printless_simulation(m, n, distribution, top):
 
 
 def degree_distribution_fit(links_number):
-    counts, bin_edges, patches = plt.hist(links_number, bins=int(n/4))
+    counts, bin_edges, _ = plt.hist(links_number, bins=int(nw.next_id/4))
     print(counts)
     print(bin_edges)
     def func(x, a, b, c, d):
@@ -56,15 +56,16 @@ def degree_distribution_fit(links_number):
     plt.plot(xx,func(xx,*popt))
     plt.show()
 
-m=7
-n=2
-distribution = expon
-constant = rv_discrete(name='constant', values=([1], [1.0]))
+m=1
+n=50
+distribution = alpha(1.5)
+nw = Bianconi_Barabasi_network(m,distribution)
+
 nodes = run_printed_simulation(m,n, distribution)
 # nodes = run_printless_simulation(m,n, distribution, 20)
 
 #if distribution has finite domain, do exponential fitness distribution
-if(distribution == uniform or distribution == arcsine):
+if(distribution in [uniform, arcsine, constant]):
 
     links_number = [n.links for n in nodes]
     links_number.sort(reverse=True)
