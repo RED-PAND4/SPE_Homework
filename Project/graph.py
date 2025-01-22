@@ -9,6 +9,8 @@ from matplotlib.widgets import Button
 import networkx as nx
 import random
 import pandas as pd
+import threading
+import time
 
 class Bianconi_Barabasi_network:
     def __init__(self,m, distribution):
@@ -21,6 +23,8 @@ class Bianconi_Barabasi_network:
         self.chosen_nodes=[]
         self.G = nx.Graph()
         self.fig, self.ax = plt.subplots()
+        self.running = False
+
         for _ in range(0,m,1):
             self.add_node()
             # self.print_all()
@@ -38,6 +42,9 @@ class Bianconi_Barabasi_network:
             n.print_node()
         # print(self.edges)
     # plt.ion()
+
+    def get_nodes(self):
+        return self.nodes
     #Print fitnesses of all nodes
     def print_fitnesses(self):
         for n in self.nodes:
@@ -149,13 +156,40 @@ class Bianconi_Barabasi_network:
         plt.title("Graph Visualization with Node Sizes Based on Degree")
 
         btn_ax = self.fig.add_axes([0.05, 0.08, 0.15, 0.08])
+        start_btn_ax = self.fig.add_axes([0.85, 0.23, 0.10, 0.08])
+        stop_btn_ax = self.fig.add_axes([0.85, 0.08, 0.10, 0.08])
+
         # axprev = fig.add_axes([0.81, 0.05, 0.1, 0.075])
         new_node_btn = Button(btn_ax, 'Add node')
         new_node_btn.on_clicked(self.update_graph_new_node)
 
+        start_btn = Button(start_btn_ax, 'Start')
+        start_btn.on_clicked(self.start_loop)
+
+        stop_btn = Button(stop_btn_ax, 'Stop')
+        stop_btn.on_clicked(self.stop_loop)
+
 
         plt.show()
+    
+    def loop_task(self):
+        """This is the task that will run in a loop."""
+        while self.running:  # Check the flag
+            self.update_graph_new_node(None)
+            time.sleep(0.2)  # Simulate work (e.g., update the graph)
 
+    def start_loop(self, event):
+        """Start the loop in a separate thread."""
+        if not self.running:  # Prevent multiple threads from being started
+            self.running = True
+            self.thread = threading.Thread(target=self.loop_task)
+            self.thread.start()
+            print("Started loop.")
+
+    def stop_loop(self, event):
+        """Stop the loop by setting the flag to False."""
+        self.running = False
+        print("Stopped loop.")
 
     def update_graph_new_node(self, event):
         # Add a new node and update the graph
@@ -183,7 +217,9 @@ class Bianconi_Barabasi_network:
         self.ax.clear()
         pos = nx.circular_layout(self.G)
         nx.draw_networkx_nodes(self.G, pos, node_size=node_sizes, node_color=node_colors, ax=self.ax)
-        nx.draw_networkx_edges(self.G, pos, width=0.3, alpha=0.5, edge_color="gray", ax=self.ax)
+        nx.draw_networkx_edges(self.G, pos, edgelist = self.edges[:-self.connections_number], width=0.3, alpha=0.5, edge_color="gray", ax=self.ax)
+        nx.draw_networkx_edges(self.G, pos, edgelist = self.edges[-self.connections_number:], width=0.5, alpha=0.5, edge_color="red", ax=self.ax)
+
         for node, (x, y) in pos.items():
             self.ax.text(x, y, node, fontsize=np.log(node_sizes[node]*50), ha='center', va='center')
         s = "Added node "+str(new_node_id)+" with fitness = "+str(new_node_fitness)
