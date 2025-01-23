@@ -116,14 +116,12 @@ class Bianconi_Barabasi_network:
     
     
     def loop_task(self):
-        """This is the task that will run in a loop."""
-        while self.running:  # Check the flag
+        while self.running:
             self.update_graph_new_node(None)
-            time.sleep(0.2)  # Simulate work (e.g., update the graph)
+            time.sleep(0.2)
 
     def start_loop(self, event):
-        """Start the loop in a separate thread."""
-        if not self.running:  # Prevent multiple threads from being started
+        if not self.running:
             self.running = True
             self.thread = threading.Thread(target=self.loop_task)
             self.thread.start()
@@ -133,16 +131,15 @@ class Bianconi_Barabasi_network:
         """Stop the loop by setting the flag to False."""
         self.running = False
         print("Stopped loop.")
-        
+
     def update_graph_new_node(self, event):
         adding = False
-        if(self.G.number_of_nodes() == 0):
-            print("First time")
+        
+        if(self.G.number_of_nodes() == 0): #first time function is called, initialization
             for n in self.nodes:
                 self.G.add_nodes_from([(n.id, {"info":"fitness:"+str(n.fitness)})])
             self.G.add_edges_from(self.edges)
-        else:
-            print("Not first time")
+        else: #not first time function is called, addign of a new node
             new_node_id = self.nodes[-1].id
             new_node_fitness = self.nodes[-1].fitness
             self.add_node()
@@ -175,6 +172,7 @@ class Bianconi_Barabasi_network:
             nx.draw_networkx_edges(self.G, pos, edgelist = self.edges[:-self.connections_number], width=0.3, alpha=0.5, edge_color="gray", ax=self.ax)
             nx.draw_networkx_edges(self.G, pos, edgelist = self.edges[-self.connections_number:], width=0.5, alpha=0.5, edge_color="red", ax=self.ax)
             s = "Added node "+str(new_node_id)+" with fitness = "+str(new_node_fitness)
+            self.ax.text(0.1, 0.0, s, fontsize=10, ha='left', va='bottom', transform=self.ax.transAxes)
             # Refresh the plot
             self.ax.axis("off")
         else:
