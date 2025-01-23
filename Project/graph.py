@@ -68,15 +68,28 @@ class Bianconi_Barabasi_network:
     #Generating links for a new node
     def generate_links(self, new_node):
         # print("generando links")
+        #no link generation if no other nodes are present
         connected=set()
+        total = 0
+        if (len(self.nodes)==0):
+            return
+        
+        #only one otehr node is present with zero links: connect to it
+        if(len(self.nodes)==1):
+            self.nodes[0].add_link()
+            new_node.add_link()
+            self.edges.append((new_node.id, self.nodes[0].id))
+            return
+        
+        for n in self.nodes:
+            total+=n.fitness*n.links 
         for _ in range(0,self.connections_number,1):
-            total=0
             comulative_prob=0
             
             x=random.random()
             # print("len connected:",len(connected), " len(self.nodes):",len(self.nodes))
             if(len(connected) == len(self.nodes)):
-                break
+                return
 
             if(len(self.nodes)==1):
                 self.nodes[0].add_link()
@@ -86,10 +99,7 @@ class Bianconi_Barabasi_network:
             # print("x:",x)
             # print("connected:",connected)
             # print("Generating anyway")
-            for n in self.nodes:
-                if n.id in connected:
-                    continue
-                total+=n.fitness*n.links 
+            
     
             #randomly selecting a new node to connect to 
             x=random.random()           
@@ -100,8 +110,9 @@ class Bianconi_Barabasi_network:
                 #print("cumulative prob:",comulative_prob)
                 if (x<=comulative_prob):
                     self.probabilities_nodes.append({'time_new_node':len(self.nodes), 'node': n.id, 'probability': (n.fitness*n.links)/total, 'chosen':True})
-                    self.probabilities_nodes[-1]
+                    # self.probabilities_nodes[-1]
                     self.chosen_nodes.append((n.links*n.fitness)/total)
+                    total -= (n.links*n.fitness)
                     connected.add(n.id)
                     n.add_link()
                     new_node.add_link()
