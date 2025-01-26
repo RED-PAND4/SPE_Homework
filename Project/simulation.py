@@ -15,7 +15,7 @@ constant = rv_discrete(name='constant', values=([1], [1.0]))
 
 nw = None
 
-def run_simulation(m,n, distribution, interactive=True, seed=None):
+def run_simulation(m,n, distribution, plot_type="all", seed=None):
     dist=None
     uniform_pattern = r'^uniform(\d+(\.\d+)?)$'
     alpha_pattern = r'^alpha(\d+(\.\d+)?)$'
@@ -27,32 +27,34 @@ def run_simulation(m,n, distribution, interactive=True, seed=None):
         case "arcsine":
             dist = arcsine
         case _ if re.match(uniform_pattern, distribution):
-            # Extract the number after "uniform"
             scale_str = re.match(uniform_pattern, distribution).group(1)
-            scale = float(scale_str)  # Convert to a number
+            scale = float(scale_str)
             dist = uniform(scale=scale)
         case _ if re.match(alpha_pattern, distribution):
-            # Extract the number after "uniform"
             a_str = re.match(alpha_pattern, distribution).group(1)
-            a = float(a_str)  # Convert to a number
+            a = float(a_str)
             dist = alpha(a)
         case _:
             dist = uniform(scale=1)
 
     global nw
+    interactive = plot_type == "all"
     nw = Bianconi_Barabasi_network(m,dist, s=seed, interactive=interactive)
-
+    
     for _ in range(0,n,1):
         nw.add_node() 
     nw.print_top(20)
 
-    if(interactive):
-        nw.plot_network()
-    nodes = nw.get_nodes()
-    nw.plot_all()
+    match plot_type:
+        case "all":
+            nw.plot_network()
+            nw.plot_graphs()
+            
+        case "graphs":
+            nw.plot_graphs()
 
-    coeff = nw.calculate_clustering_coefficient()
-    nw.plot_clust_coeff_on_fit(coeff)
+
+
 
     # print(coeff)
     if distribution in ["uniform", "constant", "arcsine"]:
@@ -96,14 +98,9 @@ def degree_distribution_fit(links_number):
     
     delta = (bin_edges[1] - bin_edges[0])/2
     xx = np.array([x+delta for x in bin_edges[:-1]])
-    # print("delta:",delta)
-    # print(xx)
-    # popt, pcov = curve_fit(func, xx,counts, [50,200,0.001,0])
-    # popt, pcov = curve_fit(func2, xx,counts, [1,1,1])
     popt, _ = curve_fit(func, xx,counts, [1,0.1,0.1], bounds=([0,-np.inf, 0], [np.inf, np.inf, np.inf]))
 
 
-    print("popt:", popt)
     # plt.plot(xx,y)
     x=np.linspace(0,bin_edges[-1],20000)
     plt.plot(xx,func(xx,*popt), "r")
@@ -112,9 +109,7 @@ def degree_distribution_fit(links_number):
 
 m=2
 n=1000
-distribution = "alpha1.5"
-# distribution = alpha(1.5)
-# distribution = uniform(scale=5)
+distribution = "uniform10"
 
 # nodes = run_printed_simulation(m,n, distribution)
 total=0
@@ -132,9 +127,17 @@ total=0
 #in uniformX and alphaX, X is either an integer or a float number (using .). example: uniform1, uniform1.5, alpha4.0
 #they represent the scale (in case of uniform) and the a parameter (in case of alpha)
 
-#"interactive" can be set to true or false, and determine wether the network will be plotted in interactive mode
+#plot_type determines what will be plotted
+#"all" plots everything, including the network in interactive mode
+#"graphs" plots only the graph and not the network
+#"none" does not plot anything, and only shows the top 20 nodes
 
 #If the distribution has a finite domain, link degree distribution fitting will be performed 
 #If the distribution has a non finite domain, the probability in time of the top node will be fitted (if possible)
 #To ensure that the fitting of a non-finite domain distribution is likely, I suggest setting m to either 1 or 2
-nodes = run_simulation(m,n, distribution, interactive=True, seed=None)
+
+nodes = run_simulation(m,n, distribution, plot_type="graphs", seed=None)
+
+
+#TODO: SMOOTH OUT IL PLOT DEL CLUS. COEFF, O FAI IL FIT (SMOOTH CON LOWESS, CHIEDI A CHATGPT)
+#TODO: IN PLOT CLUS. COEFF, PLOTTA IN COLORI DIVERSI I TOP X NODI

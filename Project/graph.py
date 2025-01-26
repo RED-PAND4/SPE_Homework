@@ -265,7 +265,6 @@ class Bianconi_Barabasi_network:
     #plot the probability of being chosen in time of node with the highest number of links
     def plot_probability_top_links(self):
         sorted_nodes = sorted(self.nodes, key=lambda node: node.links)
-        print(sorted_nodes[-1].id)
         self.plot_probability_in_time(sorted_nodes[-1].id)
 
     #Plot probability of being chosen of the top node
@@ -292,9 +291,10 @@ class Bianconi_Barabasi_network:
     def plot_network(self):
         self.update_graph_new_node(None)
 
-    def plot_all(self):
+    def plot_graphs(self):
         self.plot_probability_top_links()
         self.plot_probability_of_chosen_nodes()
+        self.plot_clust_coeff_on_fit()
         # plt.show()
 
     def node_couples(self,nodes):
@@ -345,7 +345,8 @@ class Bianconi_Barabasi_network:
             local_clust_coeff.append(connected/len(couples))
         return local_clust_coeff           
     
-    def plot_clust_coeff_on_fit(self,coeffs):
+    def plot_clust_coeff_on_fit(self):
+        coeffs = self.calculate_clustering_coefficient()
         f, ax = plt.subplots(1, figsize=(5, 5))
         fits = [n.fitness for n in self.nodes]
         ax.set_title("Clustering coefficient of nodes with respect ot their fitnesses")
