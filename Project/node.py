@@ -5,6 +5,7 @@ class Node:
         self.id=id
         self.fitness = fitness
         self.links=0
+        self.neighbours = []
 
     def add_connection(self):
           self.connection+=1
@@ -14,3 +15,6 @@ class Node:
 
     def print_node(self):
          print("Node ",self.id,", fitness:",self.fitness)
+
+    def add_neighbour(self,n):
+         self.neighbours.append(n)
