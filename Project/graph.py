@@ -17,7 +17,7 @@ class Bianconi_Barabasi_network:
 
     #m is the number of connection each new node will make. The graph will be initialized with m fully interconnected nodes
     #distribution is the distribution that is used to generate the fitnesses.
-    def __init__(self,m, distribution, s=None):
+    def __init__(self,m, distribution, s=None, interactive = False):
         #s is a seed used, if provided, for random number generator and variate draw
         self.seed=s
         self.nodes=[] #stores the list of nodes
@@ -28,7 +28,10 @@ class Bianconi_Barabasi_network:
         self.probabilities_nodes=[] #probability and other informations of chosen nodes
         self.chosen_nodes=[] #probabilities that each node had at the time of it's choosing
         self.G = nx.Graph() #The graph to plot the network
-        self.fig, self.ax = plt.subplots()
+        
+        self.fig, self.ax = (None, None)
+        if(interactive):
+            self.fig, self.ax = plt.subplots()
         self.running = False #Flag used to start/stop automatic simulation
         self.annotation = None #annotataion shown when hovering over a node
         self.rng=None
@@ -192,8 +195,8 @@ class Bianconi_Barabasi_network:
         #spring and kawai provide alternative views, but are slower. I suggest using them for networks with less than 300 nodes
         #graphviz is the most computationally intensive, I suggest to use it only with relatively small networks (<100 nodes)
 
-        # pos = nx.circular_layout(self.G)
-        pos = nx.spring_layout(self.G, k=2)  # positions for all nodes
+        pos = nx.circular_layout(self.G)
+        # pos = nx.spring_layout(self.G, k=2)  # positions for all nodes
         # pos = nx.drawing.nx_pydot.graphviz_layout(self.G, prog='dot')
         # pos = nx.kamada_kawai_layout(self.G)  # positions for all node
 
@@ -202,7 +205,7 @@ class Bianconi_Barabasi_network:
         if(adding):
             #drawn every existing edge in gray and the edges added by the new node in red
             nx.draw_networkx_edges(self.G, pos, edgelist = self.edges[:-self.connections_number], width=0.3, alpha=0.5, edge_color="gray", ax=self.ax)
-            nx.draw_networkx_edges(self.G, pos, edgelist = self.edges[-self.connections_number:], width=0.5, alpha=0.5, edge_color="red", ax=self.ax)
+            nx.draw_networkx_edges(self.G, pos, edgelist = self.edges[-self.connections_number:], width=1.0, alpha=0.5, edge_color="red", ax=self.ax)
             #displays text information about the added node
             s = "Added node "+str(new_node_id)+" with fitness = "+str(new_node_fitness)
             self.ax.text(0.1, 0.0, s, fontsize=10, ha='left', va='bottom', transform=self.ax.transAxes)
@@ -270,10 +273,11 @@ class Bianconi_Barabasi_network:
         f, ax = plt.subplots(1, figsize=(5, 5))
         node_prob = [prob["probability"] for prob in self.probabilities_nodes if prob["node"]==number_node]
         ax.set_title("Probability in time, node id:"+str(number_node))
-        ax.set_ylabel('Probability of Node')
-        ax.set_xlabel("new nodes")
+        ax.set_ylabel('Probability of chosen node')
+        ax.set_xlabel("new links")
          
         plt.plot(node_prob)
+        return node_prob
 
 
     #Shows the probability that each chosen node had when it was chosen
@@ -285,12 +289,13 @@ class Bianconi_Barabasi_network:
         x = np.linspace(0,len(self.chosen_nodes), len(self.chosen_nodes))
         plt.scatter(x,self.chosen_nodes, s = 20)
 
+    def plot_network(self):
+        self.update_graph_new_node(None)
 
     def plot_all(self):
-        self.update_graph_new_node(None)
         self.plot_probability_top_links()
         self.plot_probability_of_chosen_nodes()
-        plt.show()
+        # plt.show()
 
     def node_couples(self,nodes):
         couples = []
@@ -339,6 +344,17 @@ class Bianconi_Barabasi_network:
                     connected+=1
             local_clust_coeff.append(connected/len(couples))
         return local_clust_coeff           
-            # print(couples)
-            # for n in node.neighbours: #iterate over all neighbours of a node
-            #     for edge in self.edges: #itearte over all edges
+    
+    def plot_clust_coeff_on_fit(self,coeffs):
+        f, ax = plt.subplots(1, figsize=(5, 5))
+        fits = [n.fitness for n in self.nodes]
+        ax.set_title("Clustering coefficient of nodes with respect ot their fitnesses")
+        ax.set_xlabel("node fitness")
+        ax.set_ylabel("clustering coefficient")
+        plt.scatter(fits,coeffs, s = 15)
+        try:
+            average = sum(coeffs)/len(coeffs)
+            plt.axhline(y = average, color = 'r', linestyle = '-') 
+            # plt.show()
+        except:
+            print("Impossible to calulate average local cluster coefficients as some of them are None")
