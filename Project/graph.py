@@ -3,7 +3,6 @@ from node import Node
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import text
 import matplotlib.colors as mcolors
-from matplotlib.animation import FuncAnimation
 from matplotlib.widgets import Button
 import networkx as nx
 import random
@@ -11,6 +10,8 @@ import pandas as pd
 import threading
 import time
 import mplcursors
+from scipy.optimize import curve_fit
+
 
 #simulates a Bianconi-Barabasi network
 class Bianconi_Barabasi_network:
@@ -288,15 +289,20 @@ class Bianconi_Barabasi_network:
         x = np.linspace(0,len(self.chosen_nodes), len(self.chosen_nodes))
         plt.scatter(x,self.chosen_nodes, s = 20)
 
+    #visualizes the network
     def plot_network(self):
         self.update_graph_new_node(None)
 
+    #plots all the graphs
     def plot_graphs(self):
         self.plot_probability_top_links()
         self.plot_probability_of_chosen_nodes()
         self.plot_clust_coeff_on_fit()
         # plt.show()
 
+    #generates a list of all couples of nodes from a list
+    #ex. from [1,2,3] it generates [(1,2), (1,3), (2,3)]
+    #Note that (i,j) and (j,i) are considered the same edge, and only one of them will be included in the list
     def node_couples(self,nodes):
         couples = []
         if(len(nodes) == 2):
@@ -306,6 +312,11 @@ class Bianconi_Barabasi_network:
                 couples.append((nodes[i],nodes[j]))
         return couples
 
+    #calculate the slice of the self.edges array of the edges starting from node k
+    #self.edges list is a list of couples ordered based n the first node of the couple
+    #ex [(1,0), (2,0), (2,1), (3,0), (3,1), (3,2)]
+    #Every node generates self.connections_number new edges, except for the fist self.connections_number nodes, as there are
+    #not enough ndoes in the noetwork yet to generate enough edges. The boundaries of the slice must be calculated accordingly
     def boundaries(self,i):
         # print("boundaries for ",i)
         if i>= self.connections_number:
@@ -321,41 +332,48 @@ class Bianconi_Barabasi_network:
             finish = start+i
             return(start,finish)
 
+    #calculates the local clustering coefficient of all nodes in the network
     def calculate_clustering_coefficient(self):
         local_clust_coeff=[]
         for node in self.nodes:#iterate over all nodes to calcualte local coefficient for each
-            # print("Node:",str(node.id),", neighbours:",node.neighbours)
-            couples = self.node_couples(node.neighbours)
-            # print("couples:",couples)
-            if len(couples)==0:
+            couples = self.node_couples(node.neighbours) #generates all the possible edges between its neighbours
+            #if there are no couples it means it's connected to only 1 other node in the network
+            if len(couples)==0: 
                 local_clust_coeff.append(None)
                 continue
             connected=0
             # print(self.edges)
-            for (i,j) in couples:
+            for (i,j) in couples:#iterates over all couples
+                #retrieve boundaries of slices of self.edges containing the edges made by i and j
+                #this is done to avoid iterating over all edges list for increased performance
                 (start1, finish1) = self.boundaries(i)
                 (start2, finish2) = self.boundaries(j)
-                # print(start1, finish1, start2, finish2)
-                finish2 = start2 + self.connections_number
-                # print("edges", i,": ",self.edges[start1:finish1])
-                # print("edges", j,": ",self.edges[start2:finish2])
-
+                #checks wether edge exists
                 if (i,j) in  self.edges[start1:finish1] or (j,i) in self.edges[start2:finish2]:
                     connected+=1
             local_clust_coeff.append(connected/len(couples))
         return local_clust_coeff           
     
+    #plots local clustering coefficient of nodes with regard to their fitness
     def plot_clust_coeff_on_fit(self):
         coeffs = self.calculate_clustering_coefficient()
         f, ax = plt.subplots(1, figsize=(5, 5))
-        fits = [n.fitness for n in self.nodes]
+        fits = [n.fitness[0] for n in self.nodes]
         ax.set_title("Clustering coefficient of nodes with respect ot their fitnesses")
         ax.set_xlabel("node fitness")
         ax.set_ylabel("clustering coefficient")
         plt.scatter(fits,coeffs, s = 15)
+
         try:
             average = sum(coeffs)/len(coeffs)
-            plt.axhline(y = average, color = 'r', linestyle = '-') 
+            def func(x,a,b,c):
+                return a*np.pow(np.e,b*x)+c
+            popt, _ = curve_fit(func,fits, coeffs,[0.5,-1.0,0.5])
+
+            xx = np.linspace(min(fits),max(fits),10000)
+            plt.plot(xx, func(xx, *popt), "r", label="exponential fit of local cluster coeffs.")
+            plt.axhline(y = average, color = 'g', linestyle = '-', linewidth=0.4, label="average of local cluster coeffs.") 
+            plt.legend()
             # plt.show()
         except:
             print("Impossible to calulate average local cluster coefficients as some of them are None")
