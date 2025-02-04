@@ -109,9 +109,9 @@ def degree_distribution_fit(links_number):
     plt.show()
 
 
-m=50
-n=500
-distribution = "uniform10"
+m=7
+n=50
+distribution = "alpha1.2"
 
 # nodes = run_printed_simulation(m,n, distribution)
 total=0
@@ -136,4 +136,4 @@ total=0
 #If the distribution has a non finite domain, the probability in time of the top node will be fitted (if possible)
 #To ensure that the fitting of a non-finite domain distribution is likely, I suggest setting m to either 1 or 2
 
-nodes = run_simulation(m,n, distribution, plot_type="graphs", seed=None)
+nodes = run_simulation(m,n, distribution, plot_type="all", seed=None)

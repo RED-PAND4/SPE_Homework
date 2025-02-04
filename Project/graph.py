@@ -254,7 +254,9 @@ class Bianconi_Barabasi_network:
         if (self.annotation):
             self.annotation.set_visible(False)
             self.fig.canvas.draw_idle()  
-        sel.annotation.set_text("Node: "+str(self.nodes[sel.index].id)+"\nFitness: "+str(round(self.nodes[sel.index].fitness[0],3)))
+        sel.annotation.set_text("Node: "+str(self.nodes[sel.index].id)
+                                +"\nFitness: "+str(round(self.nodes[sel.index].fitness[0],3))
+                                +"\nLinks: "+str(self.nodes[sel.index].links))
         self.annotation = sel.annotation  # Save a reference to the annotation
 
     #removes annotation when clicking on background
