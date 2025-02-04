@@ -333,9 +333,9 @@ class Bianconi_Barabasi_network:
             return(start,finish)
 
     #calculates the local clustering coefficient of all nodes in the network
-    def calculate_clustering_coefficient(self):
+    def calculate_clustering_coefficient(self, nodes):
         local_clust_coeff=[]
-        for node in self.nodes:#iterate over all nodes to calcualte local coefficient for each
+        for node in nodes:#iterate over all nodes to calcualte local coefficient for each
             couples = self.node_couples(node.neighbours) #generates all the possible edges between its neighbours
             #if there are no couples it means it's connected to only 1 other node in the network
             if len(couples)==0: 
@@ -352,17 +352,32 @@ class Bianconi_Barabasi_network:
                 if (i,j) in  self.edges[start1:finish1] or (j,i) in self.edges[start2:finish2]:
                     connected+=1
             local_clust_coeff.append(connected/len(couples))
-        return local_clust_coeff           
+        return local_clust_coeff
     
     #plots local clustering coefficient of nodes with regard to their fitness
     def plot_clust_coeff_on_fit(self):
-        coeffs = self.calculate_clustering_coefficient()
+        sorted_nodes = sorted(self.nodes, key=lambda x: x.links)
+        sorted_links = np.array([n.links for n in sorted_nodes])
+
+        min_links = sorted_links.min()
+        max_links = sorted_links.max()
+        if max_links == min_links:
+            norm_links = np.zeros_like(sorted_links)
+        else:
+            norm_links = (sorted_links - min_links) / (max_links - min_links)
+
+
+        coeffs = self.calculate_clustering_coefficient(sorted_nodes)
         f, ax = plt.subplots(1, figsize=(5, 5))
-        fits = [n.fitness[0] for n in self.nodes]
+
+        fits = [n.fitness[0] for n in sorted_nodes]
         ax.set_title("Clustering coefficient of nodes with respect ot their fitnesses")
         ax.set_xlabel("node fitness")
         ax.set_ylabel("clustering coefficient")
-        plt.scatter(fits,coeffs, s = 15)
+
+        cmap = mcolors.LinearSegmentedColormap.from_list("my_cmap", ["#99ffff", "#000099"])
+        node_colors = [cmap(norm_degree) for norm_degree in norm_links]
+        plt.scatter(fits,coeffs, s = 15, c = node_colors)
 
         try:
             average = sum(coeffs)/len(coeffs)

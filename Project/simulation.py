@@ -58,7 +58,6 @@ def run_simulation(m,n, distribution, plot_type="all", seed=None):
 
 
 
-
     # print(coeff)
     if finite:
         # print("HEREEEE")
@@ -110,14 +109,12 @@ def degree_distribution_fit(links_number):
     plt.show()
 
 
-m=1
-n=200
-distribution = "alpha1.5"
+m=50
+n=500
+distribution = "uniform10"
 
 # nodes = run_printed_simulation(m,n, distribution)
 total=0
-
-
 #Run the simulations
 #if distribution has finite domain, do exponential fitness distribution
 
@@ -139,8 +136,4 @@ total=0
 #If the distribution has a non finite domain, the probability in time of the top node will be fitted (if possible)
 #To ensure that the fitting of a non-finite domain distribution is likely, I suggest setting m to either 1 or 2
 
-nodes = run_simulation(m,n, distribution, plot_type="all", seed=None)
-
-
-#TODO: SMOOTH OUT IL PLOT DEL CLUS. COEFF, O FAI IL FIT (SMOOTH CON LOWESS, CHIEDI A CHATGPT)
-#TODO: IN PLOT CLUS. COEFF, PLOTTA IN COLORI DIVERSI I TOP X NODI
+nodes = run_simulation(m,n, distribution, plot_type="graphs", seed=None)
