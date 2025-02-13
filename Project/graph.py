@@ -43,6 +43,7 @@ class Bianconi_Barabasi_network:
         if s != None:
             random.seed(s)
             self.rng = np.random.default_rng(seed=s)
+        print("Seed set to ",s)
 
     #Print all nodes and connections
     def print_all(self):
@@ -274,6 +275,7 @@ class Bianconi_Barabasi_network:
     def plot_probability_in_time(self, number_node):
         f, ax = plt.subplots(1, figsize=(5, 5))
         node_prob = [prob["probability"] for prob in self.probabilities_nodes if prob["node"]==number_node]
+        ax.set_ylim(0,1)
         ax.set_title("Probability in time, node id:"+str(number_node))
         ax.set_ylabel('Probability of chosen node')
         ax.set_xlabel("new links")
@@ -286,6 +288,7 @@ class Bianconi_Barabasi_network:
     def plot_probability_of_chosen_nodes(self):
         f, ax = plt.subplots(1, figsize=(5, 5))
         ax.set_title("Probability of nodes at the time of choice")
+        ax.set_ylim(0,1)
         ax.set_ylabel('Probability of Node')
         ax.set_xlabel("new nodes")
         x = np.linspace(0,len(self.chosen_nodes), len(self.chosen_nodes))
@@ -373,6 +376,7 @@ class Bianconi_Barabasi_network:
         f, ax = plt.subplots(1, figsize=(5, 5))
 
         fits = [n.fitness[0] for n in sorted_nodes]
+        ax.set_ylim(0,1)
         ax.set_title("Clustering coefficient of nodes with respect ot their fitnesses")
         ax.set_xlabel("node fitness")
         ax.set_ylabel("clustering coefficient")
