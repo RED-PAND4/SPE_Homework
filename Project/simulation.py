@@ -136,4 +136,4 @@ total=0
 #If the distribution has a non finite domain, the probability in time of the top node will be fitted (if possible)
 #To ensure that the fitting of a non-finite domain distribution is likely, I suggest setting m to either 1 or 2
 
-nodes = run_simulation(m,n, distribution, plot_type="all", seed=42)
+nodes = run_simulation(m,n, distribution, plot_type="all", seed=None)
