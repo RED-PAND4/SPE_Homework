@@ -388,13 +388,11 @@ class Bianconi_Barabasi_network:
         try:
             average = sum(coeffs)/len(coeffs)
             def func(x,a,b,c):
-                return a*np.pow(np.e,b*x)+c
+                return a*np.power(np.e,b*x)+c
             popt, _ = curve_fit(func,fits, coeffs,[0.5,-1.0,0.5])
-
             xx = np.linspace(min(fits),max(fits),10000)
             plt.plot(xx, func(xx, *popt), "r", label="exponential fit of local cluster coeffs.")
             plt.axhline(y = average, color = 'g', linestyle = '-', linewidth=0.4, label="average of local cluster coeffs.") 
             plt.legend()
-            # plt.show()
         except:
             print("Impossible to calulate average local cluster coefficients as some of them are None")
